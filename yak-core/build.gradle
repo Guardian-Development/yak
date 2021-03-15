@@ -1,14 +1,15 @@
 plugins {
     id 'java-library'
     id 'jacoco'
+    id 'checkstyle'
 }
 
 java {
-	withSourcesJar()
+    withSourcesJar()
 }
 
 repositories {
-	mavenCentral()
+    mavenCentral()
 }
 
 group = "org.guardiandev"
@@ -18,10 +19,6 @@ sourceCompatibility = '11'
 dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.6.2'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
-}
-
-jacoco {
-	toolVersion = "0.8.5"
 }
 
 tasks.named('test') {
@@ -34,4 +31,24 @@ jacocoTestReport {
     }
 }
 
+jacocoTestCoverageVerification {
+    dependsOn jacocoTestReport
+    violationRules {
+        rule {
+            limit {
+                counter = 'INSTRUCTION'
+                minimum = 0.80
+            }
+        }
+    }
+}
+
+checkstyle {
+    toolVersion = "8.41"
+    configDirectory = file("${rootProject.rootDir}/config/checkstyle")
+    maxErrors = 0
+    maxWarnings = 0
+}
+
 check.dependsOn jacocoTestReport
+check.finalizedBy javadoc, jacocoTestCoverageVerification
