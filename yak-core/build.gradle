@@ -1,5 +1,6 @@
 plugins {
     id 'java-library'
+    id 'maven-publish'
     id 'jacoco'
     id 'checkstyle'
     id "me.champeau.jmh" version "0.6.2"
@@ -7,14 +8,16 @@ plugins {
 
 java {
     withSourcesJar()
+    withJavadocJar()
 }
 
 repositories {
     mavenCentral()
+    mavenLocal()
 }
 
 group = "org.guardiandev"
-version = "1.0.0-SNAPSHOT"
+version = "${property('yak.version')}"
 sourceCompatibility = '11'
 
 dependencies {
@@ -56,6 +59,18 @@ jmh {
     warmupIterations = 2
     iterations = 5
     fork = 1
+}
+
+javadoc {
+    options.addBooleanOption('html5', true)
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            from components.java
+        }
+    }
 }
 
 check.dependsOn jacocoTestReport
