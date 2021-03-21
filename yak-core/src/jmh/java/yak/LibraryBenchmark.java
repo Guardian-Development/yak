@@ -16,8 +16,8 @@ public class LibraryBenchmark {
   @Benchmark
   @BenchmarkMode(Mode.AverageTime)
   public void exampleBenchmark(final Blackhole bh) {
-    final var test = new Library();
-    bh.consume(test.someLibraryMethod());
+    final var test = new YakCacheBuilder<>();
+    bh.consume(test.maximumKeys(100));
   }
 
 }

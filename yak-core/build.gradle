@@ -21,8 +21,11 @@ version = "${property('yak.version')}"
 sourceCompatibility = '11'
 
 dependencies {
+    implementation 'org.agrona:agrona:1.9.0'
+
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.6.2'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
+    testImplementation 'org.assertj:assertj-core:3.19.0'
 }
 
 tasks.named('test') {
@@ -69,6 +72,15 @@ publishing {
     publications {
         maven(MavenPublication) {
             from components.java
+        }
+    }
+}
+
+test {
+    maxParallelForks = Runtime.runtime.availableProcessors().intdiv(2) ?: 1
+    testLogging {
+        afterTest { desc, result ->
+            logger.quiet "Test ${desc.name} [${desc.className}] with result: ${result.resultType}"
         }
     }
 }
