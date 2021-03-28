@@ -13,7 +13,7 @@ class YakCacheTest {
     // Arrange
     final var unitUnderTest = YakCache.<String, TestCacheValue>newBuilder()
         .fixedValueSize(TestCacheValueSerializer.MAXIMUM_SUPPORTED_SIZE_BYTES)
-        .maximumKeys(10)
+        .maximumKeys(16)
         .valueSerializer(new TestCacheValueSerializer())
         .build();
 

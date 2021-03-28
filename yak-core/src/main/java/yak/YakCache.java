@@ -1,6 +1,7 @@
 package yak;
 
 import yak.serialization.YakValueSerializer;
+import yak.storage.OpenAddressingHashMap;
 import yak.storage.YakValueStorage;
 
 /**
@@ -24,14 +25,14 @@ public final class YakCache<T, Q> {
 
   private final YakValueStorage storage;
   private final YakValueSerializer<Q> valueSerializer;
-  private final int maximumKeys;
+  private final OpenAddressingHashMap<T> keyToStorageIndex;
 
   YakCache(final int maximumKeys,
            final YakValueSerializer<Q> valueSerializer,
            final YakValueStorage storage) {
-    this.maximumKeys = maximumKeys;
     this.valueSerializer = valueSerializer;
     this.storage = storage;
+    this.keyToStorageIndex = new OpenAddressingHashMap<>(maximumKeys);
   }
 
   /**
@@ -41,10 +42,12 @@ public final class YakCache<T, Q> {
    * @return the value associated with the key, or null if not found.
    */
   public Q get(final T key) {
-    final var hashCode = key.hashCode();
-    final var index = Math.abs(hashCode % maximumKeys);
-    final var value = storage.getStorage(index);
+    final var storageIndex = keyToStorageIndex.getExistingOrAssign(key);
+    if (storageIndex == null) {
+      return null;
+    }
 
+    final var value = storage.getStorage(storageIndex);
     return valueSerializer.deserialize(value);
   }
 
@@ -56,10 +59,12 @@ public final class YakCache<T, Q> {
    * @return true if successfully stored, else false.
    */
   public boolean put(final T key, final Q value) {
-    final var hashCode = key.hashCode();
-    final var index = Math.abs(hashCode % maximumKeys);
-    final var storageValue = storage.getStorage(index);
+    var storageIndex = keyToStorageIndex.getExistingOrAssign(key);
+    if (storageIndex == null) {
+      return false;
+    }
 
+    final var storageValue = storage.getStorage(storageIndex);
     final var entrySize = valueSerializer.serialize(value, storageValue);
     return true;
   }
