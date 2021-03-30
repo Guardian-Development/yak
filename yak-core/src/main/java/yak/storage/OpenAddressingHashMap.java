@@ -11,7 +11,10 @@ public final class OpenAddressingHashMap<K> {
 
   private final Object[] keys;
 
-  // TODO: implement double hashing
+  // m and m', where m` = m - 1
+  // h1(k) = k mod m = initial location
+  // h2(k) = 1 + (k mod m') = increment between locations
+  private final int keySpace;
   private final int mprime;
 
   /**
@@ -29,6 +32,7 @@ public final class OpenAddressingHashMap<K> {
 
     this.keys = new Object[fixedSize];
     this.mprime = fixedSize - 1;
+    this.keySpace = keys.length;
   }
 
   private boolean isPowerOf2(final int size) {
@@ -64,7 +68,7 @@ public final class OpenAddressingHashMap<K> {
     }
 
     final var hash = key.hashCode();
-    final var position = Math.abs(hash % keys.length);
+    final var position = Math.abs(hash % keySpace);
 
     final var currentEntryAtPosition = keys[position];
 
@@ -75,7 +79,8 @@ public final class OpenAddressingHashMap<K> {
     }
 
     // collision happened, search for potential key in remaining set
-    var searchingPosition = position == keys.length - 1 ? 0 : position + 1;
+    final var searchIncrement = 1 + (hash % mprime);
+    var searchingPosition = (position + searchIncrement) % keySpace;
     var nextViableInsertLocation = -1;
 
     while (searchingPosition != position) {
@@ -99,7 +104,7 @@ public final class OpenAddressingHashMap<K> {
       }
 
       // not found, but not hit exit condition, continue searching
-      searchingPosition = searchingPosition == keys.length - 1 ? 0 : searchingPosition + 1;
+      searchingPosition = (searchingPosition + searchIncrement) % keySpace;
     }
 
     // key does not exist in set, if current position is marked as deleted, use current position
@@ -143,7 +148,7 @@ public final class OpenAddressingHashMap<K> {
     }
 
     final var hash = key.hashCode();
-    final var position = Math.abs(hash % keys.length);
+    final var position = Math.abs(hash % keySpace);
 
     final var currentEntryAtPosition = keys[position];
 
@@ -158,10 +163,11 @@ public final class OpenAddressingHashMap<K> {
       return true;
     }
 
-    var searchingPosition = position == keys.length - 1 ? 0 : position + 1;
+    final var searchIncrement = 1 + (hash % mprime);
+    var searchingPosition = (position + searchIncrement) % keySpace;
 
     while (searchingPosition != position) {
-      final var searchingEntry = keys[position];
+      final var searchingEntry = keys[searchingPosition];
 
       // if empty, key cant be present
       if (searchingEntry == null) {
@@ -175,7 +181,7 @@ public final class OpenAddressingHashMap<K> {
       }
 
       // not found, but not hit exit condition, continue searching
-      searchingPosition = searchingPosition == keys.length - 1 ? 0 : searchingPosition + 1;
+      searchingPosition = (searchingPosition + searchIncrement) % keySpace;
     }
 
     return true;

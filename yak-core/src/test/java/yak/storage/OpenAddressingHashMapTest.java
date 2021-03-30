@@ -43,11 +43,12 @@ class OpenAddressingHashMapTest {
 
     underTest.getExistingOrAssign(key1);
 
-    // Act
+    // Act - 1 + (16 % 7) = 3
+    // 0 + 3 = next position 3
     final var location = underTest.getExistingOrAssign(key2);
 
     // Assert
-    assertThat(location).isEqualTo(1);
+    assertThat(location).isEqualTo(3);
   }
 
   @Test
@@ -60,11 +61,12 @@ class OpenAddressingHashMapTest {
     underTest.getExistingOrAssign(key1);
     underTest.getExistingOrAssign(key2);
 
-    // Act
+    // Act - 1 + (16 % 7) = 3
+    // 0 + 3 = next position 3
     final var location = underTest.getExistingOrAssign(key2);
 
     // Assert
-    assertThat(location).isEqualTo(1);
+    assertThat(location).isEqualTo(3);
   }
 
   @Test
@@ -165,7 +167,8 @@ class OpenAddressingHashMapTest {
     underTest.getExistingOrAssign(key1);
     underTest.getExistingOrAssign(key2);
 
-    // Act
+    // Act - 1 + (6 % 3) = 1
+    // (2 + 1) % 4 = next position 3
     final var deleted = underTest.delete(key2);
 
     // Assert
@@ -181,7 +184,8 @@ class OpenAddressingHashMapTest {
 
     underTest.getExistingOrAssign(key1);
 
-    // Act
+    // Act - 1 + (6 % 3) = 1
+    // (2 + 1) % 4 = next position 3
     final var deleted = underTest.delete(key2);
 
     // Assert
@@ -202,7 +206,9 @@ class OpenAddressingHashMapTest {
     underTest.getExistingOrAssign(key3);
     underTest.getExistingOrAssign(key4);
 
-    final var nonExistingKey = new FixedHashCodeOf(18); // 18 % 2 = location 2
+    // Act - 1 + (18 % 3) = 1
+    // (2 + 1) % 4 = next position 3, 0, 1, 2
+    final var nonExistingKey = new FixedHashCodeOf(18); // 18 % 4 = location 2
 
     // Act
     final var deleted = underTest.delete(nonExistingKey);
