@@ -1,0 +1,114 @@
+package org.guardiandev.yak;
+
+import java.util.List;
+import org.guardiandev.yak.events.YakEventListener;
+import org.guardiandev.yak.eviction.YakEvictionStrategy;
+import org.guardiandev.yak.serialization.YakValueSerializer;
+import org.guardiandev.yak.storage.YakValueStorage;
+
+/**
+ * Used to help build a cache, with default parameters used for all not-provided user values.
+ *
+ * @param <T> the key type of the cache
+ * @param <Q> the value type of the cache
+ */
+public final class YakCacheBuilder<T, Q> {
+
+  private int maximumKeys = 1024;
+  private int fixedValueSize = 256;
+  private YakValueStorage storage = YakValueStorage.DIRECT_MEMORY_STORAGE;
+  private YakEvictionStrategy<T> strategy = YakEvictionStrategy.leastRecentlyUsed();
+
+  private YakValueSerializer<Q> valueSerializer;
+
+  YakCacheBuilder() {
+  }
+
+  /**
+   * Sets the maximum number of keys in the cache at any point. If the key size is hit, the cache will evict keys
+   * to make sure it does not exceed this limit.
+   *
+   * <p>
+   * By default, the maximum keys in the cache is 1024.
+   * </p>
+   *
+   * @param maximumKeys the maximum number of keys
+   * @return self
+   */
+  public YakCacheBuilder<T, Q> maximumKeys(final int maximumKeys) {
+    this.maximumKeys = maximumKeys;
+    return this;
+  }
+
+  /**
+   * The maximum size, in bytes, of a value stored in the cache. This is used when provisioning the storage for the
+   * cache.
+   * <p>
+   * By default, the maximum size of a key in the cache is 256 bytes.
+   * </p>
+   *
+   * @param fixedValueSize the maximum size of a value in the ache in bytes
+   * @return self
+   */
+  public YakCacheBuilder<T, Q> fixedValueSize(final int fixedValueSize) {
+    this.fixedValueSize = fixedValueSize;
+    return this;
+  }
+
+  /**
+   * Used for serializing the values to and from the storage mechanism.
+   *
+   * @param valueSerializer serializer for your value type
+   * @return self
+   */
+  public YakCacheBuilder<T, Q> valueSerializer(final YakValueSerializer<Q> valueSerializer) {
+    this.valueSerializer = valueSerializer;
+    return this;
+  }
+
+  /**
+   * The underlying storage mechanism when storing values in the cache.
+   * <p>
+   * By default, the storage mechanism for the cache is in-memory, meaning all values are stored in RAM.
+   * </p>
+   *
+   * @param storage the storage mechanism to use
+   * @return self
+   */
+  public YakCacheBuilder<T, Q> valueStorageMechanism(final YakValueStorage storage) {
+    this.storage = storage;
+    return this;
+  }
+
+  /**
+   * The eviction strategy to use with the cache.
+   * <p>
+   * By default, the eviction strategy is an LRU cache.
+   * </p>
+   *
+   * @param strategy the eviction strategy to use
+   * @return self
+   */
+  public YakCacheBuilder<T, Q> evictionStrategy(final YakEvictionStrategy<T> strategy) {
+
+    this.strategy = strategy;
+    return this;
+  }
+
+  /**
+   * Build the cache, and init any storage resources needed.
+   * <p>
+   * After this method returns the cache will be created and available for use.
+   * </p>
+   *
+   * @return the built cache
+   */
+  public YakCache<T, Q> build() {
+    storage.init(maximumKeys, fixedValueSize);
+    strategy.init(maximumKeys);
+
+    final var eventListeners = List.<YakEventListener<T>>of(strategy);
+
+    return new YakCache<>(maximumKeys, valueSerializer, storage, strategy, eventListeners);
+  }
+}

@@ -1,0 +1,89 @@
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+    id 'jacoco'
+    id 'checkstyle'
+    id 'me.champeau.jmh'
+}
+
+group = "org.guardiandev"
+version = "${property('org.guardiandev.yak.version')}"
+sourceCompatibility = '11'
+
+java {
+    withSourcesJar()
+    withJavadocJar()
+}
+
+repositories {
+    mavenCentral()
+    mavenLocal()
+}
+
+dependencies {
+    implementation 'org.agrona:agrona:1.9.0'
+
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.6.2'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
+    testImplementation 'org.assertj:assertj-core:3.19.0'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
+
+jacocoTestReport {
+    reports {
+        html.enabled true
+    }
+}
+
+jacocoTestCoverageVerification {
+    dependsOn jacocoTestReport
+    violationRules {
+        rule {
+            limit {
+                counter = 'INSTRUCTION'
+                minimum = 0.80
+            }
+        }
+    }
+}
+
+checkstyle {
+    toolVersion = "8.41"
+    configDirectory = file("${rootProject.rootDir}/config/checkstyle")
+    maxErrors = 0
+    maxWarnings = 0
+}
+
+jmh {
+    jmhVersion = '1.28'
+    warmupIterations = 2
+    iterations = 5
+    fork = 1
+}
+
+javadoc {
+    options.addBooleanOption('html5', true)
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            from components.java
+        }
+    }
+}
+
+test {
+    maxParallelForks = Runtime.runtime.availableProcessors().intdiv(2) ?: 1
+    testLogging {
+        afterTest { desc, result ->
+            logger.quiet "Test ${desc.name} [${desc.className}] with result: ${result.resultType}"
+        }
+    }
+}
+
+check.dependsOn jacocoTestReport
+check.finalizedBy javadoc, jacocoTestCoverageVerification

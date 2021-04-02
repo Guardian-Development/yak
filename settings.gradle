@@ -1,2 +1,2 @@
-rootProject.name = 'yak'
-include('yak-core')
+rootProject.name = 'org.guardiandev.yak'
+include('yak-core', 'yak-server')
