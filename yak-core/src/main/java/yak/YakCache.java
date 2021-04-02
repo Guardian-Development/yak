@@ -1,5 +1,12 @@
 package yak;
 
+import static yak.events.YakEventListener.YakEvent.GET_CACHE_HIT;
+import static yak.events.YakEventListener.YakEvent.GET_CACHE_MISS;
+import static yak.events.YakEventListener.YakEvent.PUT;
+
+import java.util.List;
+import yak.events.YakEventListener;
+import yak.eviction.YakEvictionStrategy;
 import yak.serialization.YakValueSerializer;
 import yak.storage.OpenAddressingHashMap;
 import yak.storage.YakValueStorage;
@@ -26,13 +33,19 @@ public final class YakCache<T, Q> {
   private final YakValueStorage storage;
   private final YakValueSerializer<Q> valueSerializer;
   private final OpenAddressingHashMap<T> keyToStorageIndex;
+  private final YakEvictionStrategy<T> evictionStrategy;
+  private final List<YakEventListener<T>> eventListeners;
 
   YakCache(final int maximumKeys,
            final YakValueSerializer<Q> valueSerializer,
-           final YakValueStorage storage) {
+           final YakValueStorage storage,
+           final YakEvictionStrategy<T> evictionStrategy,
+           final List<YakEventListener<T>> eventListeners) {
     this.valueSerializer = valueSerializer;
     this.storage = storage;
     this.keyToStorageIndex = new OpenAddressingHashMap<>(maximumKeys);
+    this.evictionStrategy = evictionStrategy;
+    this.eventListeners = eventListeners;
   }
 
   /**
@@ -44,11 +57,16 @@ public final class YakCache<T, Q> {
   public Q get(final T key) {
     final var storageIndex = keyToStorageIndex.getExistingOrAssign(key);
     if (storageIndex == null) {
+      broadcastEvent(GET_CACHE_MISS, key, null);
       return null;
     }
 
-    final var value = storage.getStorage(storageIndex);
-    return valueSerializer.deserialize(value);
+    final var storageValue = storage.getStorage(storageIndex);
+    final var value = valueSerializer.deserialize(storageValue);
+
+    broadcastEvent(GET_CACHE_HIT, key, value);
+
+    return value;
   }
 
   /**
@@ -61,11 +79,27 @@ public final class YakCache<T, Q> {
   public boolean put(final T key, final Q value) {
     var storageIndex = keyToStorageIndex.getExistingOrAssign(key);
     if (storageIndex == null) {
-      return false;
+      final var evictedKey = evictionStrategy.keyToEvict();
+      keyToStorageIndex.delete(evictedKey);
+
+      storageIndex = keyToStorageIndex.getExistingOrAssign(key);
     }
 
     final var storageValue = storage.getStorage(storageIndex);
-    final var entrySize = valueSerializer.serialize(value, storageValue);
+    valueSerializer.serialize(value, storageValue);
+
+    broadcastEvent(PUT, key, value);
+
     return true;
+  }
+
+  private void broadcastEvent(final YakEventListener.YakEvent event, final T key, final Q value) {
+    if (eventListeners.isEmpty()) {
+      return;
+    }
+
+    for (var i = 0; i < eventListeners.size(); i++) {
+      eventListeners.get(i).accept(event, key, value);
+    }
   }
 }

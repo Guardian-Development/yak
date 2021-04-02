@@ -1,5 +1,8 @@
 package yak;
 
+import java.util.List;
+import yak.events.YakEventListener;
+import yak.eviction.YakEvictionStrategy;
 import yak.serialization.YakValueSerializer;
 import yak.storage.YakValueStorage;
 
@@ -14,6 +17,7 @@ public final class YakCacheBuilder<T, Q> {
   private int maximumKeys = 1024;
   private int fixedValueSize = 256;
   private YakValueStorage storage = YakValueStorage.DIRECT_MEMORY_STORAGE;
+  private YakEvictionStrategy<T> strategy = YakEvictionStrategy.leastRecentlyUsed();
 
   private YakValueSerializer<Q> valueSerializer;
 
@@ -77,6 +81,21 @@ public final class YakCacheBuilder<T, Q> {
   }
 
   /**
+   * The eviction strategy to use with the cache.
+   * <p>
+   * By default, the eviction strategy is an LRU cache.
+   * </p>
+   *
+   * @param strategy the eviction strategy to use
+   * @return self
+   */
+  public YakCacheBuilder<T, Q> evictionStrategy(final YakEvictionStrategy<T> strategy) {
+
+    this.strategy = strategy;
+    return this;
+  }
+
+  /**
    * Build the cache, and init any storage resources needed.
    * <p>
    * After this method returns the cache will be created and available for use.
@@ -86,6 +105,10 @@ public final class YakCacheBuilder<T, Q> {
    */
   public YakCache<T, Q> build() {
     storage.init(maximumKeys, fixedValueSize);
-    return new YakCache<>(maximumKeys, valueSerializer, storage);
+    strategy.init(maximumKeys);
+
+    final var eventListeners = List.<YakEventListener<T>>of(strategy);
+
+    return new YakCache<>(maximumKeys, valueSerializer, storage, strategy, eventListeners);
   }
 }

@@ -2,9 +2,11 @@ package yak;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.jupiter.api.Test;
 import yak.reference.TestCacheValue;
 import yak.reference.TestCacheValueSerializer;
+import yak.serialization.YakValueSerializer;
 
 class YakCacheTest {
 
@@ -29,5 +31,37 @@ class YakCacheTest {
     assertThat(result)
         .usingRecursiveComparison()
         .isEqualTo(cacheValue);
+  }
+
+  @Test
+  void shouldBeAbleToReadBackMultipleKeyValues() {
+    // Arrange
+    final int numberOfKeys = 4096;
+    final var unitUnderTest = YakCache.<Integer, Integer>newBuilder()
+        .fixedValueSize(50)
+        .maximumKeys(numberOfKeys)
+        .valueSerializer(new YakValueSerializer<>() {
+          @Override
+          public int serialize(Integer value, UnsafeBuffer valueBuffer) {
+            valueBuffer.putInt(0, value);
+            return Integer.BYTES;
+          }
+
+          @Override
+          public Integer deserialize(UnsafeBuffer valueBuffer) {
+            return valueBuffer.getInt(0);
+          }
+        })
+        .build();
+
+    // Act
+    for (int i = 0; i < numberOfKeys; i++) {
+      unitUnderTest.put(i, i);
+    }
+
+    // Assert
+    for (int i = 0; i < numberOfKeys; i++) {
+      assertThat(unitUnderTest.get(i)).isEqualTo(i);
+    }
   }
 }
