@@ -1,6 +1,7 @@
 package org.guardiandev.yak.storage;
 
 import java.util.UUID;
+import org.guardiandev.yak.utils.IntegerExtensions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,7 +36,7 @@ public final class OpenAddressingHashMap<K> {
    * @param fixedSize the size of the hash map
    */
   public OpenAddressingHashMap(final int fixedSize) {
-    assert isPowerOf2(fixedSize) : "the size of the hashmap must be a power of 2";
+    assert IntegerExtensions.isPowerOf2(fixedSize) : "the size of the hashmap must be a power of 2";
 
     this.keys = new Object[fixedSize];
     this.mprime = fixedSize - 1;
@@ -44,10 +45,6 @@ public final class OpenAddressingHashMap<K> {
     this.name = String.format("storage-%s", UUID.randomUUID().toString().substring(0, 5));
 
     LOG.debug("[{}] hash map created with fixed size {}", name, fixedSize);
-  }
-
-  private boolean isPowerOf2(final int size) {
-    return Integer.bitCount(size) == 1;
   }
 
   /**

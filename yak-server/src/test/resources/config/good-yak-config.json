@@ -1,0 +1,12 @@
+{
+  "port": 9000,
+  "caches": [
+    {
+      "name": "example1",
+      "maximumKeys": 64,
+      "fixedValueSize": 128,
+      "valueStorageMechanism": "DirectMemoryStorage",
+      "evictionStrategy": "LRU"
+    }
+  ]
+}

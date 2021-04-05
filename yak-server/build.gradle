@@ -2,3 +2,7 @@ plugins {
     id 'me.champeau.jmh' version '0.6.2'
     id 'yak.java-conventions'
 }
+
+dependencies {
+    implementation "com.fasterxml.jackson.core:jackson-databind:2.12.2"
+}

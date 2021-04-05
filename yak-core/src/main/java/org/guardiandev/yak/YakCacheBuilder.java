@@ -6,6 +6,7 @@ import org.guardiandev.yak.events.YakEventListener;
 import org.guardiandev.yak.eviction.YakEvictionStrategy;
 import org.guardiandev.yak.serialization.YakValueSerializer;
 import org.guardiandev.yak.storage.YakValueStorage;
+import org.guardiandev.yak.utils.IntegerExtensions;
 
 /**
  * Used to help build a cache, with default parameters used for all not-provided user values.
@@ -41,6 +42,8 @@ public final class YakCacheBuilder<T, Q> {
    * @return self
    */
   public YakCacheBuilder<T, Q> maximumKeys(final int maximumKeys) {
+    assert IntegerExtensions.isPowerOf2(maximumKeys) : "the maximum keys in the cache must be a power of 2";
+
     this.maximumKeys = maximumKeys;
     return this;
   }
