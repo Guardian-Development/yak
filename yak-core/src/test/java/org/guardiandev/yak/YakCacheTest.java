@@ -64,4 +64,39 @@ class YakCacheTest {
       assertThat(unitUnderTest.get(i)).isEqualTo(i);
     }
   }
+
+
+  @Test
+  void shouldBeAbleToReadBackMultipleKeyValuesWhenKeySizeExceedsCacheSize() {
+    // Arrange
+    final int numberOfKeys = 16384;
+    final int cacheSize = 4096;
+    final var unitUnderTest = YakCache.<Integer, Integer>newBuilder()
+            .fixedValueSize(50)
+            .maximumKeys(cacheSize)
+            .valueSerializer(new YakValueSerializer<>() {
+              @Override
+              public int serialize(Integer value, UnsafeBuffer valueBuffer) {
+                valueBuffer.putInt(0, value);
+                return Integer.BYTES;
+              }
+
+              @Override
+              public Integer deserialize(UnsafeBuffer valueBuffer) {
+                return valueBuffer.getInt(0);
+              }
+            })
+            .build();
+
+    // Act
+    for (int i = 0; i < numberOfKeys; i++) {
+      unitUnderTest.put(i, i);
+    }
+
+    // Assert - with LRU eviction should be left with last 1024 keys inserted
+    final int remainingKeys = numberOfKeys - cacheSize;
+    for (int i = remainingKeys; i < numberOfKeys; i++) {
+      assertThat(unitUnderTest.get(i)).isEqualTo(i);
+    }
+  }
 }

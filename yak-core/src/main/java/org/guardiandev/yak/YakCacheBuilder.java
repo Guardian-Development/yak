@@ -1,6 +1,7 @@
 package org.guardiandev.yak;
 
 import java.util.List;
+import java.util.UUID;
 import org.guardiandev.yak.events.YakEventListener;
 import org.guardiandev.yak.eviction.YakEvictionStrategy;
 import org.guardiandev.yak.serialization.YakValueSerializer;
@@ -14,6 +15,7 @@ import org.guardiandev.yak.storage.YakValueStorage;
  */
 public final class YakCacheBuilder<T, Q> {
 
+  private String name = String.format("cache-%s", UUID.randomUUID().toString().substring(0, 5));
   private int maximumKeys = 1024;
   private int fixedValueSize = 256;
   private YakValueStorage storage = YakValueStorage.DIRECT_MEMORY_STORAGE;
@@ -21,7 +23,10 @@ public final class YakCacheBuilder<T, Q> {
 
   private YakValueSerializer<Q> valueSerializer;
 
-  YakCacheBuilder() {
+  /**
+   * New builder for creating a Yak Cache.
+   */
+  public YakCacheBuilder() {
   }
 
   /**
@@ -96,6 +101,21 @@ public final class YakCacheBuilder<T, Q> {
   }
 
   /**
+   * The name of the cache.
+   * <p>
+   * By default, this has the format cache-UUID. This name is used within all logs, when enabled.
+   * </p>
+   *
+   * @param name the name of the cache
+   * @return self
+   */
+  public YakCacheBuilder<T, Q> name(final String name) {
+
+    this.name = name;
+    return this;
+  }
+
+  /**
    * Build the cache, and init any storage resources needed.
    * <p>
    * After this method returns the cache will be created and available for use.
@@ -109,6 +129,6 @@ public final class YakCacheBuilder<T, Q> {
 
     final var eventListeners = List.<YakEventListener<T>>of(strategy);
 
-    return new YakCache<>(maximumKeys, valueSerializer, storage, strategy, eventListeners);
+    return new YakCache<>(name, maximumKeys, valueSerializer, storage, strategy, eventListeners);
   }
 }

@@ -41,4 +41,9 @@ public final class DirectMemoryStorage implements YakValueStorage {
 
     return buffers[index];
   }
+
+  @Override
+  public String toString() {
+    return "DirectMemoryStorage{" + "inMemoryStorage=" + inMemoryStorage + '}';
+  }
 }
