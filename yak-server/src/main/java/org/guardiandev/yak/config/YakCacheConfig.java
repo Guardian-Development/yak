@@ -1,6 +1,6 @@
 package org.guardiandev.yak.config;
 
-final class YakCacheConfig {
+public final class YakCacheConfig {
 
   private String name;
   private Integer maximumKeys;

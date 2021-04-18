@@ -2,7 +2,7 @@ package org.guardiandev.yak.config;
 
 import java.util.List;
 
-final class YakServerConfig {
+public final class YakServerConfig {
 
   private Integer port;
   private List<YakCacheConfig> caches;

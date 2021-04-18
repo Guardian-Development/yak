@@ -1,5 +1,6 @@
 package org.guardiandev.yak;
 
+import org.guardiandev.yak.cacheprogression.CacheInitializer;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Mode;
@@ -22,7 +23,7 @@ public class LibraryBenchmark {
   @BenchmarkMode(Mode.AverageTime)
   public void exampleBenchmark(final Blackhole bh) {
 
-    final var test = new YakServer();
+    final var test = new CacheInitializer(null);
     bh.consume(test);
   }
 
