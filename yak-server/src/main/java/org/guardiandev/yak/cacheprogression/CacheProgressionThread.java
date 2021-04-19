@@ -1,18 +1,15 @@
 package org.guardiandev.yak.cacheprogression;
 
-import java.util.List;
+import java.util.Collection;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-// TODO: basic connection wrapper logic
-// TODO: finish up cache tick stuff
+public final class CacheProgressionThread extends Thread {
 
-public final class CacheTickThread extends Thread {
-
-  private final List<CacheWrapper> caches;
+  private final Collection<CacheWrapper> caches;
   private final AtomicBoolean isRunning;
 
-  CacheTickThread(final List<CacheWrapper> caches) {
-    super("cache-tick-thread");
+  public CacheProgressionThread(final Collection<CacheWrapper> caches) {
+    super("cache-progression-thread");
     this.caches = caches;
     this.isRunning = new AtomicBoolean(false);
   }
@@ -38,7 +35,7 @@ public final class CacheTickThread extends Thread {
   public void run() {
     while (isRunning.get()) {
       for (CacheWrapper cache : caches) {
-        cache.tick();
+        cache.progressIncomingRequests();
       }
     }
   }

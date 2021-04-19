@@ -65,7 +65,6 @@ class YakCacheTest {
     }
   }
 
-
   @Test
   void shouldBeAbleToReadBackMultipleKeyValuesWhenKeySizeExceedsCacheSize() {
     // Arrange

@@ -5,6 +5,7 @@ import org.guardiandev.yak.YakCache;
 import org.guardiandev.yak.YakCacheBuilder;
 import org.guardiandev.yak.config.YakCacheConfig;
 import org.guardiandev.yak.eviction.YakEvictionStrategy;
+import org.guardiandev.yak.responder.CacheResponseToResponderBridge;
 import org.guardiandev.yak.serialization.YakValueSerializer;
 import org.guardiandev.yak.storage.YakValueStorage;
 
@@ -24,12 +25,14 @@ public final class CacheInitializer {
     this.config = config;
   }
 
-  public Map<String, YakCache<String, ByteBuffer>> init() {
+  public Map<String, CacheWrapper> init(final CacheResponseToResponderBridge responderBridge) {
 
-    final var caches = new HashMap<String, YakCache<String, ByteBuffer>>(config.size(), 1);
+    final var caches = new HashMap<String, CacheWrapper>(config.size(), 1);
 
     for (final var cache : config) {
-      caches.put(cache.getName(), buildFromConfig(cache));
+      final var builtCache = buildFromConfig(cache);
+      final var wrap = new CacheWrapper(builtCache, responderBridge);
+      caches.put(cache.getName(), wrap);
     }
 
     return caches;
