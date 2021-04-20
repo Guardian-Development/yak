@@ -6,10 +6,11 @@ import org.slf4j.LoggerFactory;
 // TODO: picks correct responder (i.e. found/not-found, http/custom) then registers with responder thread
 public final class CacheResponseToResponderBridge {
 
-  private static Logger LOG = LoggerFactory.getLogger(CacheResponseToResponderBridge.class);
+  private static final Logger LOG = LoggerFactory.getLogger(CacheResponseToResponderBridge.class);
 
   // TODO: here in the chain now
   public void acceptCacheResponse(final CacheResponse response) {
     LOG.trace("accepted response of type {}", response);
+    // TODO: next create a responder here, then buffer it in the responder thread, must take copy of value if present here
   }
 }

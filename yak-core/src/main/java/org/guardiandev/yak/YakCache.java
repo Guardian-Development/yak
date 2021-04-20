@@ -69,7 +69,7 @@ public final class YakCache<T, Q> {
   public Q get(final T key) {
     LOG.trace("[name={},key={}] getting entry in cache", name, key);
 
-    final var storageIndex = keyToStorageIndex.getExistingOrAssign(key);
+    final var storageIndex = keyToStorageIndex.get(key);
 
     if (storageIndex == null) {
       LOG.trace("[name={},key={}] cache miss", name, key);
