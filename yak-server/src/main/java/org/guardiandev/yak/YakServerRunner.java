@@ -7,6 +7,7 @@ import org.guardiandev.yak.cacheprogression.CacheProgressionThread;
 import org.guardiandev.yak.cacheprogression.IncomingConnectionToCacheWrapperBridge;
 import org.guardiandev.yak.config.YakConfigFromJsonBuilder;
 import org.guardiandev.yak.responder.CacheResponseToResponderBridge;
+import org.guardiandev.yak.responder.ResponderThread;
 
 import java.nio.file.Path;
 
@@ -16,6 +17,7 @@ public final class YakServerRunner {
 
   private ConnectionAcceptorThread acceptorThread;
   private CacheProgressionThread cacheProgressionThread;
+  private ResponderThread responderThread;
 
   YakServerRunner(final String configLocation) {
     this.configLocation = configLocation;
@@ -24,7 +26,9 @@ public final class YakServerRunner {
   public boolean init() {
     final var config = new YakConfigFromJsonBuilder(Path.of(configLocation)).load();
 
-    final var cacheResponseBridge = new CacheResponseToResponderBridge();
+    responderThread = new ResponderThread();
+
+    final var cacheResponseBridge = new CacheResponseToResponderBridge(responderThread);
     final var cacheInit = new CacheInitializer(config.getCaches());
     final var cacheNameToCache = cacheInit.init(cacheResponseBridge);
 
@@ -38,6 +42,7 @@ public final class YakServerRunner {
   }
 
   public void run() {
+    responderThread.start();
     cacheProgressionThread.start();
     acceptorThread.start();
   }

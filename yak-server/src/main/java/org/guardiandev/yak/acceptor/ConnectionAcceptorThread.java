@@ -12,7 +12,11 @@ import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-// TODO: test this
+// TODO: test everything.... :(
+// TODO: add a single 404 integration test
+// TODO: add a single 201 created integration test
+// TODO: add a single 200 get integration test
+// TODO: add a single 202 get integration test (no content)
 
 public final class ConnectionAcceptorThread extends Thread {
 

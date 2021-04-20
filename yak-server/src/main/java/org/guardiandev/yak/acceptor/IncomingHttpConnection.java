@@ -1,5 +1,7 @@
 package org.guardiandev.yak.acceptor;
 
+import org.guardiandev.yak.http.Constants;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
@@ -11,12 +13,6 @@ public final class IncomingHttpConnection implements IncomingConnection {
     HEADERS,
     MESSAGE_BODY
   }
-
-  private final static byte CR = "\r".getBytes()[0];
-  private final static byte LF = "\n".getBytes()[0];
-  private final static String SPACE = " ";
-  private final static String SLASH = "/";
-  private final static String CRLF_SEQUENCE = "\r\n";
 
   private final SocketChannel rawConnection;
   private final HttpRequest request;
@@ -59,7 +55,7 @@ public final class IncomingHttpConnection implements IncomingConnection {
     while(readBuffer.position() < readPosition) {
       final var nextByte = readBuffer.get();
 
-      if (previousByte == CR && nextByte == LF) {
+      if (previousByte == Constants.CR && nextByte == Constants.LF) {
         switch (stage) {
           // TODO: handle body and header variables, store as bytes
           case REQUEST_URI:
@@ -90,7 +86,7 @@ public final class IncomingHttpConnection implements IncomingConnection {
       stringBuffer.append((char)readBuffer.get());
     }
 
-    final var requestUriParts = stringBuffer.toString().split(SPACE);
+    final var requestUriParts = stringBuffer.toString().split(Constants.SPACE);
     request.setMethod(requestUriParts[0]);
     request.setRequestUri(requestUriParts[1]);
     request.setHttpVersion(requestUriParts[2]);
@@ -100,7 +96,7 @@ public final class IncomingHttpConnection implements IncomingConnection {
   public IncomingCacheRequest getRequest() {
     assert isComplete : "can not get request for incomplete incoming connection";
 
-    final var uriParts = request.getRequestUri().split(SLASH);
+    final var uriParts = request.getRequestUri().split(Constants.SLASH);
     final var key = uriParts[uriParts.length - 1];
     final var cache = uriParts[uriParts.length - 2];
 
