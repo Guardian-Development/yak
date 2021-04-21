@@ -1,16 +1,16 @@
 package org.guardiandev.yak.config;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
-import org.junit.jupiter.api.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 class YakConfigFromJsonBuilderTest {
 
   @Test
-  void shouldLoadGoodConfigSingleCache() throws IOException {
+  void shouldLoadGoodConfigSingleCache() {
     // Arrange
     final var expectedConfig = new YakServerConfig()
             .setPort(9000)
@@ -33,7 +33,7 @@ class YakConfigFromJsonBuilderTest {
   }
 
   @Test
-  void shouldLoadConfigMissingValues() throws IOException {
+  void shouldLoadConfigMissingValues() {
     // Arrange
     final var expectedConfig = new YakServerConfig()
             .setCaches(List.of(new YakCacheConfig()));
@@ -50,7 +50,7 @@ class YakConfigFromJsonBuilderTest {
   }
 
   @Test
-  void shouldLoadConfigNoValuesPresent() throws IOException {
+  void shouldLoadConfigNoValuesPresent() {
     // Arrange
     final var expectedConfig = new YakServerConfig();
 

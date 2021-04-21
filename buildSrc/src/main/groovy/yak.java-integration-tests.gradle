@@ -1,0 +1,32 @@
+sourceSets {
+    // adds integration test source set
+    intTest {
+        java.srcDir "$projectDir/src/intTest/java"
+        resources.srcDir "$projectDir/src/intTest/resources"
+        compileClasspath += main.output + test.output
+        runtimeClasspath += main.output + test.output
+    }
+}
+
+configurations {
+    intTestImplementation.extendsFrom testImplementation
+    intTestRuntime.extendsFrom testRuntime
+}
+
+// run the intTest/** tests
+task intTest(type: Test) {
+    description = 'runs int tests'
+    group = 'verification'
+    testClassesDirs = sourceSets.intTest.output.classesDirs
+    classpath = sourceSets.intTest.runtimeClasspath
+}
+
+intTest {
+    useJUnitPlatform()
+    testLogging {
+        afterTest { desc, result ->
+            logger.quiet "Test ${desc.name} [${desc.className}] with result: ${result.resultType}"
+        }
+    }
+}
+

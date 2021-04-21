@@ -6,6 +6,7 @@ import org.guardiandev.yak.cacheprogression.CacheInitializer;
 import org.guardiandev.yak.cacheprogression.CacheProgressionThread;
 import org.guardiandev.yak.cacheprogression.IncomingConnectionToCacheWrapperBridge;
 import org.guardiandev.yak.config.YakConfigFromJsonBuilder;
+import org.guardiandev.yak.config.YakServerConfig;
 import org.guardiandev.yak.responder.CacheResponseToResponderBridge;
 import org.guardiandev.yak.responder.ResponderThread;
 
@@ -13,19 +14,17 @@ import java.nio.file.Path;
 
 public final class YakServerRunner {
 
-  private final String configLocation;
+  private final YakServerConfig config;
 
   private ConnectionAcceptorThread acceptorThread;
   private CacheProgressionThread cacheProgressionThread;
   private ResponderThread responderThread;
 
-  YakServerRunner(final String configLocation) {
-    this.configLocation = configLocation;
+  public YakServerRunner(final YakServerConfig config) {
+    this.config = config;
   }
 
   public boolean init() {
-    final var config = new YakConfigFromJsonBuilder(Path.of(configLocation)).load();
-
     responderThread = new ResponderThread();
 
     final var cacheResponseBridge = new CacheResponseToResponderBridge(responderThread);
@@ -41,15 +40,28 @@ public final class YakServerRunner {
     return true;
   }
 
-  public void run() {
+  public void start() {
     responderThread.start();
     cacheProgressionThread.start();
     acceptorThread.start();
   }
 
+  public boolean isRunning() {
+    return acceptorThread.isAlive() && cacheProgressionThread.isAlive() && responderThread.isAlive();
+  }
+
+  public void stop() {
+    acceptorThread.interrupt();
+    cacheProgressionThread.interrupt();
+    responderThread.interrupt();
+  }
+
   public static void main(final String[] args) {
-    final var runner = new YakServerRunner("/Users/Joe.Honour/code/yak/yak-server/src/test/resources/config/good-yak-config.json");
+    final var configLocation = Path.of("/Users/Joe.Honour/code/yak/yak-server/src/test/resources/config/good-yak-config.json");
+    final var config = new YakConfigFromJsonBuilder(configLocation).load();
+
+    final var runner = new YakServerRunner(config);
     runner.init();
-    runner.run();
+    runner.start();
   }
 }

@@ -25,25 +25,24 @@ dependencies {
     implementation 'org.slf4j:slf4j-api:1.7.30'
 
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.6.2'
-    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
+    testRuntime 'org.junit.jupiter:junit-jupiter-engine'
 
-    testRuntimeOnly 'org.apache.logging.log4j:log4j-api:2.11.1'
-    testRuntimeOnly 'org.apache.logging.log4j:log4j-core:2.11.1'
-    testRuntimeOnly 'org.apache.logging.log4j:log4j-slf4j-impl:2.11.1'
+    testRuntime 'org.apache.logging.log4j:log4j-api:2.11.1'
+    testRuntime 'org.apache.logging.log4j:log4j-core:2.11.1'
+    testRuntime 'org.apache.logging.log4j:log4j-slf4j-impl:2.11.1'
 
     testImplementation 'org.assertj:assertj-core:3.19.0'
     testImplementation 'org.mockito:mockito-junit-jupiter:3.9.0'
     testImplementation 'org.mockito:mockito-core:3.9.0'
-}
-
-tasks.named('test') {
-    useJUnitPlatform()
+    testImplementation 'org.awaitility:awaitility:4.0.3'
 }
 
 jacocoTestReport {
+    dependsOn tasks.withType(Test)
     reports {
         html.enabled true
     }
+    executionData tasks.withType(Test)
 }
 
 jacocoTestCoverageVerification {
@@ -85,6 +84,7 @@ publishing {
 }
 
 test {
+    useJUnitPlatform()
     maxParallelForks = Runtime.runtime.availableProcessors().intdiv(2) ?: 1
     testLogging {
         afterTest { desc, result ->
