@@ -45,12 +45,33 @@ final class HttpApiIntTest {
     }
 
     @Test
+    void shouldReturnCreatedStatusWhenInsertingKey() throws IOException, InterruptedException {
+        // Arrange
+        final var client = HttpClient.newHttpClient();
+
+        final var request = HttpRequest.newBuilder()
+                .uri(URI.create("http://localhost:9911/intTest/key-to-create"))
+                .method("POST", HttpRequest.BodyPublishers.ofString("test-value"))
+                .version(HttpClient.Version.HTTP_1_1)
+                .timeout(Duration.ofSeconds(10))
+                .build();
+
+        // Act
+        final var response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+        // Assert
+        assertThat(response.statusCode()).isEqualTo(201);
+        assertThat(response.body()).isNullOrEmpty();
+    }
+
+    @Test
     void shouldReturnNotFoundStatusForNonExistingKey() throws IOException, InterruptedException {
         // Arrange
         final var client = HttpClient.newHttpClient();
 
         final var request = HttpRequest.newBuilder()
                 .uri(URI.create("http://localhost:9911/intTest/non-existing-key"))
+                .version(HttpClient.Version.HTTP_1_1)
                 .timeout(Duration.ofSeconds(10))
                 .build();
 
@@ -59,5 +80,6 @@ final class HttpApiIntTest {
 
         // Assert
         assertThat(response.statusCode()).isEqualTo(404);
+        assertThat(response.body()).isNullOrEmpty();
     }
 }
