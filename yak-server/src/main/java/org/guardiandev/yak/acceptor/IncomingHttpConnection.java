@@ -17,6 +17,7 @@ public final class IncomingHttpConnection implements IncomingConnection {
   private final SocketChannel rawConnection;
   private final HttpRequest request;
   private boolean isComplete;
+  private boolean hasError;
 
   private final ByteBuffer readBuffer;
   private int processedPosition;
@@ -40,10 +41,15 @@ public final class IncomingHttpConnection implements IncomingConnection {
   @Override
   public boolean progress() throws IOException {
 
-    // TODO: handle -1 and close
     final var bytesRead = rawConnection.read(readBuffer);
+
     if (bytesRead == 0) {
       return false;
+    }
+
+    if (bytesRead == -1) {
+      hasError = true;
+      return true;
     }
 
     // mark position in buffer you have used for reading
@@ -65,35 +71,28 @@ public final class IncomingHttpConnection implements IncomingConnection {
         final var thisByte = readBuffer.get();
 
         if (previousByte == Constants.CR && thisByte == Constants.LF) {
-          switch (stage) {
-            case REQUEST_URI:
-
-              final var requestUriEndPosition = readBuffer.position();
-              extractRequestUri(processedCommittedPosition, requestUriEndPosition - 2);
-              readBuffer.position(requestUriEndPosition);
-              stage = ProcessingStage.HEADERS;
-              processedCommittedPosition = requestUriEndPosition;
-
-              break;
-            case HEADERS:
-
-              final var headersEndPosition = readBuffer.position();
-              if (headersComplete(processedCommittedPosition, headersEndPosition - 2)) {
-                stage = ProcessingStage.MESSAGE_BODY;
-                readBuffer.position(headersEndPosition);
-                processedCommittedPosition = headersEndPosition;
-                final var bodyLength = extractMessageBodyLength();
-                if (bodyLength == 0) {
-                  isComplete = true;
-                  return true;
-                }
-              } else {
-                extractHeader(processedCommittedPosition, headersEndPosition - 2);
-                readBuffer.position(headersEndPosition);
-                processedCommittedPosition = headersEndPosition;
+          if (stage == ProcessingStage.REQUEST_URI) {
+            final var requestUriEndPosition = readBuffer.position();
+            extractRequestUri(processedCommittedPosition, requestUriEndPosition - 2);
+            readBuffer.position(requestUriEndPosition);
+            stage = ProcessingStage.HEADERS;
+            processedCommittedPosition = requestUriEndPosition;
+          } else if (stage == ProcessingStage.HEADERS) {
+            final var headersEndPosition = readBuffer.position();
+            if (headersComplete(processedCommittedPosition, headersEndPosition - 2)) {
+              stage = ProcessingStage.MESSAGE_BODY;
+              readBuffer.position(headersEndPosition);
+              processedCommittedPosition = headersEndPosition;
+              final var bodyLength = extractMessageBodyLength();
+              if (bodyLength == 0) {
+                isComplete = true;
+                return true;
               }
-
-              break;
+            } else {
+              extractHeader(processedCommittedPosition, headersEndPosition - 2);
+              readBuffer.position(headersEndPosition);
+              processedCommittedPosition = headersEndPosition;
+            }
           }
         } else {
           previousByte = thisByte;
@@ -153,6 +152,11 @@ public final class IncomingHttpConnection implements IncomingConnection {
   private void extractMessageBody(final int startingPosition, final int length) {
     request.setBodyStartIndex(startingPosition);
     request.setBodyLength(length);
+  }
+
+  @Override
+  public boolean hasError() {
+    return hasError;
   }
 
   @Override

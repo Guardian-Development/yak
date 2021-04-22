@@ -12,10 +12,6 @@ import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-// TODO: add a single 201 created integration test
-// TODO: add a single 200 get integration test
-// TODO: add a single 202 get integration test (no content)
-
 public final class ConnectionAcceptorThread extends Thread {
 
   private static final Logger LOG = LoggerFactory.getLogger(ConnectionAcceptorThread.class);
@@ -106,15 +102,16 @@ public final class ConnectionAcceptorThread extends Thread {
 
     final var connectionsToProgress = acceptingSelector.selectedKeys();
     final var connectionIterator = connectionsToProgress.iterator();
+
     while (connectionIterator.hasNext()) {
       final var connection = connectionIterator.next();
       try {
         progressReadyConnection(connection);
       } catch (IOException e) {
         LOG.trace("failed to progress connection", e);
-        // TODO: close the channel
-        connection.cancel();
+        closeConnection(connection);
       }
+
       connectionIterator.remove();
     }
   }
@@ -144,9 +141,23 @@ public final class ConnectionAcceptorThread extends Thread {
     final var incomingConnection = (IncomingConnection) connection.attachment();
     final var complete = incomingConnection.progress();
     if (complete) {
+      if (incomingConnection.hasError()) {
+        closeConnection(connection);
+        return;
+      }
+
       final var request = incomingConnection.getRequest();
       connection.cancel();
       cacheWrapperBridge.acceptIncomingConnection(request);
+    }
+  }
+
+  private void closeConnection(final SelectionKey connection) {
+    try {
+      connection.cancel();
+      connection.channel().close();
+    } catch (IOException ex) {
+      LOG.trace("failed to close connection, abandoning", ex);
     }
   }
 }

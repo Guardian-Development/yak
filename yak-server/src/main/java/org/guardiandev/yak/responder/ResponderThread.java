@@ -92,15 +92,23 @@ public final class ResponderThread extends Thread {
 
     final var connectionsToProgress = respondingSelector.selectedKeys();
     final var connectionIterator = connectionsToProgress.iterator();
+
     while (connectionIterator.hasNext()) {
       final var connection = connectionIterator.next();
       try {
         progressReadyConnection(connection);
       } catch (IOException e) {
         LOG.trace("failed to progress connection", e);
-        // TODO: close the channel
+
+        try {
+          connection.channel().close();
+        } catch (IOException ex) {
+          LOG.trace("failed to close connection, abandoning", ex);
+        }
+
         connection.cancel();
       }
+
       connectionIterator.remove();
     }
   }
@@ -121,8 +129,13 @@ public final class ResponderThread extends Thread {
     try {
       connection.register(respondingSelector, SelectionKey.OP_WRITE, responder);
     } catch (ClosedChannelException e) {
-      LOG.debug("failed to register responder with selector");
-      // TODO: close connection
+      LOG.trace("failed to register responder with selector", e);
+
+      try {
+        connection.close();
+      } catch (IOException ex) {
+        LOG.trace("failed to close connection, abandoning", ex);
+      }
     }
   }
 }
