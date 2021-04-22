@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 public final class CacheResponseToResponderBridge {
 
   private static final Logger LOG = LoggerFactory.getLogger(CacheResponseToResponderBridge.class);
+
   private final ResponderThread responderThread;
 
   public CacheResponseToResponderBridge(final ResponderThread responderThread) {
@@ -16,11 +17,15 @@ public final class CacheResponseToResponderBridge {
 
   // TODO: use a factory for the responder from the original request
   public void acceptCacheResponse(final CacheResponse response) {
-    LOG.trace("accepted response of type {}", response);
 
     final var responder = new HttpResponder(response.getResultChannel());
-    if (response.getType() == CacheResponseType.NOT_FOUND) {
-      responder.bufferResponse(Result.KEY_NOT_FOUND, null);
+    switch (response.getType()) {
+      case NOT_FOUND:
+        responder.bufferResponse(Result.KEY_NOT_FOUND, null);
+        break;
+      case CREATED:
+        responder.bufferResponse(Result.KEY_CREATED, null);
+        break;
     }
 
     responderThread.bufferResponse(responder);

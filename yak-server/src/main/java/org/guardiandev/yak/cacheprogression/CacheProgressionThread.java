@@ -1,9 +1,14 @@
 package org.guardiandev.yak.cacheprogression;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Collection;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class CacheProgressionThread extends Thread {
+
+  private static final Logger LOG = LoggerFactory.getLogger(CacheProgressionThread.class);
 
   private final Collection<CacheWrapper> caches;
   private final AtomicBoolean isRunning;
@@ -16,8 +21,12 @@ public final class CacheProgressionThread extends Thread {
 
   @Override
   public synchronized void start() {
-    super.start();
+    LOG.debug("starting cache progression thread");
+
     isRunning.set(true);
+    super.start();
+
+    LOG.debug("started cache progression thread");
   }
 
   @Override

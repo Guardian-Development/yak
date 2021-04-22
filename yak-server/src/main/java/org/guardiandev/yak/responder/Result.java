@@ -1,7 +1,8 @@
 package org.guardiandev.yak.responder;
 
 public enum Result {
-  KEY_NOT_FOUND("404", "Not Found Key");
+  KEY_NOT_FOUND("404", "Not Found Key"),
+  KEY_CREATED("201", "Created Key");
 
   private final String code;
   private final String reasonPhrase;

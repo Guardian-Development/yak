@@ -43,6 +43,14 @@ public final class CacheResponse {
     return this;
   }
 
+  public CacheResponse asCreated(final String key, final SocketChannel resultChannel) {
+    this.key = key;
+    this.resultChannel = resultChannel;
+
+    this.type = CacheResponseType.CREATED;
+    return this;
+  }
+
   public void clear() {
     this.type = null;
     this.key = null;

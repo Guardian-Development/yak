@@ -151,8 +151,8 @@ public final class IncomingHttpConnection implements IncomingConnection {
   }
 
   private void extractMessageBody(final int startingPosition, final int length) {
-    readBuffer.position(startingPosition);
-    request.saveBody(readBuffer, length);
+    request.setBodyStartIndex(startingPosition);
+    request.setBodyLength(length);
   }
 
   @Override
@@ -164,10 +164,15 @@ public final class IncomingHttpConnection implements IncomingConnection {
     final var cache = uriParts[uriParts.length - 2];
     final var type = typeFromMethod(request.getMethod());
 
-    // TODO: start here tommorow
-    // TODO: use the body from the http request (maybe only store start and end locatino of body to then copy to this object instead)
-    //   build in the body if needed, this will also need to be memory pooled
-    return new IncomingCacheRequest(type, cache, key, rawConnection);
+    readBuffer.position(request.getBodyStartIndex());
+    readBuffer.limit(readBuffer.position() + request.getBodyLength());
+
+    return new IncomingCacheRequest()
+            .setResultChannel(rawConnection)
+            .setCacheName(cache)
+            .setKeyName(key)
+            .setType(type)
+            .setContent(readBuffer);
   }
 
   private IncomingCacheRequestType typeFromMethod(final String httpMethod) {

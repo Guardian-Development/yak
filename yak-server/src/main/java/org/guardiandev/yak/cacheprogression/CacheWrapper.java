@@ -35,14 +35,31 @@ public final class CacheWrapper {
   private void progressIncomingRequest(final IncomingCacheRequest request) {
 
     cacheResponse.clear();
+
+    switch (request.getType()) {
+      case GET:
+        processGetRequest(request);
+        break;
+      case CREATE:
+        processCreateRequest(request);
+        break;
+    }
+
+    responderBridge.acceptCacheResponse(cacheResponse);
+  }
+
+  private void processGetRequest(final IncomingCacheRequest request) {
     final var result = cache.get(request.getKeyName());
 
     if (result == null) {
       cacheResponse.asNotFound(request.getKeyName(), request.getResultChannel());
     } else {
-      cacheResponse.asFound(cacheResponse.getKey(), result, cacheResponse.getResultChannel());
+      cacheResponse.asFound(request.getKeyName(), result, request.getResultChannel());
     }
+  }
 
-    responderBridge.acceptCacheResponse(cacheResponse);
+  private void processCreateRequest(final IncomingCacheRequest request) {
+    cache.put(request.getKeyName(), request.getContent());
+    cacheResponse.asCreated(request.getKeyName(), request.getResultChannel());
   }
 }
