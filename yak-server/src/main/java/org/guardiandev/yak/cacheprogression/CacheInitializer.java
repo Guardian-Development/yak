@@ -69,6 +69,7 @@ public final class CacheInitializer {
 
         final var bufferLength = valueBuffer.getInt(0);
         valueBuffer.getBytes(Integer.BYTES, deserializeIntoBuffer, bufferLength);
+        deserializeIntoBuffer.flip();
         return deserializeIntoBuffer;
       }
     });

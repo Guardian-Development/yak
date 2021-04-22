@@ -24,18 +24,43 @@ public final class HttpResponder implements Responder {
 
   @Override
   public void bufferResponse(final Result responseCode, final ByteBuffer body) {
+    buildRequestLine(responseCode);
+    writeBuffer.put(Constants.CRLF_SEQUENCE_BYTES);
+    buildHeaders(body);
+    writeBuffer.put(Constants.CRLF_SEQUENCE_BYTES);
+    buildBody(body);
+
+    writeBuffer.flip();
+  }
+
+  private void buildRequestLine(final Result responseCode) {
     writeBuffer.put(Constants.HTTP_VERSION_BYTES);
     writeBuffer.put(Constants.SPACE_BYTE);
     writeBuffer.put(responseCode.getCode().getBytes());
     writeBuffer.put(Constants.SPACE_BYTE);
     writeBuffer.put(Constants.SPACE_BYTE);
     writeBuffer.put(responseCode.getReasonPhrase().getBytes());
-    writeBuffer.put(Constants.CRLF_SEQUENCE_BYTES);
+  }
 
-    // todo: this gap is where the body would go
-    writeBuffer.put(Constants.CRLF_SEQUENCE_BYTES);
+  private void buildHeaders(final ByteBuffer body) {
+    if (body == null || !body.hasRemaining()) {
+      return;
+    }
 
-    writeBuffer.flip();
+    // content length header
+    writeBuffer.put(Constants.CONTENT_LENGTH_BYTES);
+    writeBuffer.put(Constants.COLON_BYTE);
+    writeBuffer.put(Constants.SPACE_BYTE);
+    writeBuffer.put(String.valueOf(body.remaining()).getBytes());
+    writeBuffer.put(Constants.CRLF_SEQUENCE_BYTES);
+  }
+
+  private void buildBody(final ByteBuffer body) {
+    if (body == null || !body.hasRemaining()) {
+      return;
+    }
+
+    writeBuffer.put(body);
   }
 
   @Override

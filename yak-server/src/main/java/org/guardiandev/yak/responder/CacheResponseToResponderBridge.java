@@ -20,6 +20,9 @@ public final class CacheResponseToResponderBridge {
 
     final var responder = new HttpResponder(response.getResultChannel());
     switch (response.getType()) {
+      case FOUND:
+        responder.bufferResponse(Result.KEY_FOUND, response.getValue());
+        break;
       case NOT_FOUND:
         responder.bufferResponse(Result.KEY_NOT_FOUND, null);
         break;

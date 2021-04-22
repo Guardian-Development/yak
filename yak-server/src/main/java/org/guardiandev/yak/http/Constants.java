@@ -9,10 +9,14 @@ public final class Constants {
   public final static byte CR = "\r".getBytes()[0];
   public final static byte LF = "\n".getBytes()[0];
   public final static String COLON = ":";
+  public final static byte COLON_BYTE = ":".getBytes()[0];
   public final static String SPACE = " ";
   public final static byte SPACE_BYTE = SPACE.getBytes()[0];
+  public final static String QUOTE = "\"";
+  public final static byte QUOTE_BYTE = QUOTE.getBytes()[0];
   public final static String SLASH = "/";
   public final static String CRLF_SEQUENCE = "\r\n";
   public final static byte[] CRLF_SEQUENCE_BYTES = CRLF_SEQUENCE.getBytes();
   public final static String CONTENT_LENGTH = "Content-Length";
+  public final static byte[] CONTENT_LENGTH_BYTES = CONTENT_LENGTH.getBytes();
 }

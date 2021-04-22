@@ -1,6 +1,7 @@
 package org.guardiandev.yak.responder;
 
 public enum Result {
+  KEY_FOUND("200", "Key Found"),
   KEY_NOT_FOUND("404", "Not Found Key"),
   KEY_CREATED("201", "Created Key");
 

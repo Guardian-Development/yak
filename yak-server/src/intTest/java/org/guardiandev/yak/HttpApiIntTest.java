@@ -16,6 +16,9 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
+
+// TODO: bridge should always be responsible for copying buffers needed for next stage from previous stage
 
 final class HttpApiIntTest {
 
@@ -65,7 +68,36 @@ final class HttpApiIntTest {
     }
 
     @Test
-    void shouldReturnNotFoundStatusForNonExistingKey() throws IOException, InterruptedException {
+    void shouldReturnOkStatusForGetOfExistingKeyWithKeyContents() throws IOException, InterruptedException {
+        // Arrange
+        final var client = HttpClient.newHttpClient();
+
+        final var createRequest = HttpRequest.newBuilder()
+                .uri(URI.create("http://localhost:9911/intTest/key-to-create"))
+                .method("POST", HttpRequest.BodyPublishers.ofString("test-value"))
+                .version(HttpClient.Version.HTTP_1_1)
+                .timeout(Duration.ofSeconds(10))
+                .build();
+
+        final var createResponse = client.send(createRequest, HttpResponse.BodyHandlers.ofString());
+        assumeTrue(createResponse.statusCode() == 201);
+
+        final var getRequest = HttpRequest.newBuilder()
+                .uri(URI.create("http://localhost:9911/intTest/key-to-create"))
+                .version(HttpClient.Version.HTTP_1_1)
+                .timeout(Duration.ofSeconds(10))
+                .build();
+
+        // Act
+        final var response = client.send(getRequest, HttpResponse.BodyHandlers.ofString());
+
+        // Assert
+        assertThat(response.statusCode()).isEqualTo(200);
+        assertThat(response.body()).isEqualTo("test-value");
+    }
+
+    @Test
+    void shouldReturnNotFoundStatusForGetOfNonExistingKey() throws IOException, InterruptedException {
         // Arrange
         final var client = HttpClient.newHttpClient();
 
