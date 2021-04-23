@@ -52,14 +52,14 @@ public final class CacheWrapper {
     final var result = cache.get(request.getKeyName());
 
     if (result == null) {
-      cacheResponse.asNotFound(request.getKeyName(), request.getResultChannel());
+      cacheResponse.asNotFound(request.getKeyName(), request.getResponder());
     } else {
-      cacheResponse.asFound(request.getKeyName(), result, request.getResultChannel());
+      cacheResponse.asFound(request.getKeyName(), result, request.getResponder());
     }
   }
 
   private void processCreateRequest(final IncomingCacheRequest request) {
     cache.put(request.getKeyName(), request.getContent());
-    cacheResponse.asCreated(request.getKeyName(), request.getResultChannel());
+    cacheResponse.asCreated(request.getKeyName(), request.getResponder());
   }
 }

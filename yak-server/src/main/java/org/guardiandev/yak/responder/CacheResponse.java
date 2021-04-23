@@ -1,14 +1,13 @@
 package org.guardiandev.yak.responder;
 
 import java.nio.ByteBuffer;
-import java.nio.channels.SocketChannel;
 
 public final class CacheResponse {
 
   private CacheResponseType type;
   private String key;
   private ByteBuffer value;
-  private SocketChannel resultChannel;
+  private Responder responder;
 
   public CacheResponseType getType() {
     return type;
@@ -22,30 +21,30 @@ public final class CacheResponse {
     return value;
   }
 
-  public SocketChannel getResultChannel() {
-    return resultChannel;
+  public Responder getResponder() {
+    return responder;
   }
 
-  public CacheResponse asFound(final String key, final ByteBuffer value, final SocketChannel resultChannel) {
+  public CacheResponse asFound(final String key, final ByteBuffer value, final Responder responder) {
     this.key = key;
     this.value = value;
-    this.resultChannel = resultChannel;
+    this.responder = responder;
 
     this.type = CacheResponseType.FOUND;
     return this;
   }
 
-  public CacheResponse asNotFound(final String key, final SocketChannel resultChannel) {
+  public CacheResponse asNotFound(final String key, final Responder responder) {
     this.key = key;
-    this.resultChannel = resultChannel;
+    this.responder = responder;
 
     this.type = CacheResponseType.NOT_FOUND;
     return this;
   }
 
-  public CacheResponse asCreated(final String key, final SocketChannel resultChannel) {
+  public CacheResponse asCreated(final String key, final Responder responder) {
     this.key = key;
-    this.resultChannel = resultChannel;
+    this.responder = responder;
 
     this.type = CacheResponseType.CREATED;
     return this;
@@ -55,6 +54,6 @@ public final class CacheResponse {
     this.type = null;
     this.key = null;
     this.value = null;
-    this.resultChannel = null;
+    this.responder = null;
   }
 }

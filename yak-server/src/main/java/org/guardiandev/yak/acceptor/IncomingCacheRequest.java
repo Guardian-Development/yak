@@ -1,14 +1,15 @@
 package org.guardiandev.yak.acceptor;
 
+import org.guardiandev.yak.responder.Responder;
+
 import java.nio.ByteBuffer;
-import java.nio.channels.SocketChannel;
 
 public final class IncomingCacheRequest {
 
   private IncomingCacheRequestType type;
   private String cacheName;
   private String keyName;
-  private SocketChannel resultChannel;
+  private Responder responder;
 
   private final ByteBuffer content;
 
@@ -44,15 +45,6 @@ public final class IncomingCacheRequest {
     return this;
   }
 
-  public SocketChannel getResultChannel() {
-    return resultChannel;
-  }
-
-  public IncomingCacheRequest setResultChannel(SocketChannel resultChannel) {
-    this.resultChannel = resultChannel;
-    return this;
-  }
-
   public ByteBuffer getContent() {
     return content;
   }
@@ -63,11 +55,20 @@ public final class IncomingCacheRequest {
     return this;
   }
 
+  public Responder getResponder() {
+    return responder;
+  }
+
+  public IncomingCacheRequest setResponder(Responder responder) {
+    this.responder = responder;
+    return this;
+  }
+
   public void reset() {
     this.type = null;
     this.cacheName = null;
     this.keyName = null;
-    this.resultChannel = null;
+    this.responder = null;
     this.content.clear();
   }
 }

@@ -15,10 +15,9 @@ public final class HttpResponder implements Responder {
   private final SocketChannel rawConnection;
   private final ByteBuffer writeBuffer;
 
-  // TODO: have a responder factory, attach to initial request, then once cache is done it can pull that off and pass
-  //  variables needed to use this, then we can run multiple protocols at same time
   public HttpResponder(final SocketChannel rawConnection) {
     this.rawConnection = rawConnection;
+    // TODO: memory pool
     this.writeBuffer = ByteBuffer.allocate(512);
   }
 

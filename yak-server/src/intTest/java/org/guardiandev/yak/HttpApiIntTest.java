@@ -18,8 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
-// TODO: bridge should always be responsible for copying buffers needed for next stage from previous stage
-
 final class HttpApiIntTest {
 
     private YakServerRunner yakServer;

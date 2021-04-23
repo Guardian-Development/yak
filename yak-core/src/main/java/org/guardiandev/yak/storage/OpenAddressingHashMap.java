@@ -1,6 +1,7 @@
 package org.guardiandev.yak.storage;
 
 import java.util.UUID;
+
 import org.guardiandev.yak.utils.IntegerExtensions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,7 +48,12 @@ public final class OpenAddressingHashMap<K> {
     LOG.debug("[{}] hash map created with fixed size {}", name, fixedSize);
   }
 
-  // TODO: test
+  /**
+   * Searches for the location of the key within the hash map.
+   *
+   * @param key the key to search for
+   * @return the location of the key if it exists, else null
+   */
   public Integer get(final K key) {
     LOG.trace("[name={},key={}] getting position for key", name, key);
 

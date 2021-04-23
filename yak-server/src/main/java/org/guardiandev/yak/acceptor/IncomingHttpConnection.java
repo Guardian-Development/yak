@@ -1,6 +1,7 @@
 package org.guardiandev.yak.acceptor;
 
 import org.guardiandev.yak.http.Constants;
+import org.guardiandev.yak.responder.HttpResponder;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -172,7 +173,7 @@ public final class IncomingHttpConnection implements IncomingConnection {
     readBuffer.limit(readBuffer.position() + request.getBodyLength());
 
     return new IncomingCacheRequest()
-            .setResultChannel(rawConnection)
+            .setResponder(new HttpResponder(rawConnection))
             .setCacheName(cache)
             .setKeyName(key)
             .setType(type)
