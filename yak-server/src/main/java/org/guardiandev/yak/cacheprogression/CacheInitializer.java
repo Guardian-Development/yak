@@ -3,8 +3,10 @@ package org.guardiandev.yak.cacheprogression;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.guardiandev.yak.YakCache;
 import org.guardiandev.yak.YakCacheBuilder;
+import org.guardiandev.yak.acceptor.IncomingCacheRequest;
 import org.guardiandev.yak.config.YakCacheConfig;
 import org.guardiandev.yak.eviction.YakEvictionStrategy;
+import org.guardiandev.yak.pool.MemoryPool;
 import org.guardiandev.yak.responder.CacheResponseToResponderBridge;
 import org.guardiandev.yak.serialization.YakValueSerializer;
 import org.guardiandev.yak.storage.YakValueStorage;
@@ -25,13 +27,14 @@ public final class CacheInitializer {
     this.config = config;
   }
 
-  public Map<String, CacheWrapper> init(final CacheResponseToResponderBridge responderBridge) {
+  public Map<String, CacheWrapper> init(final CacheResponseToResponderBridge responderBridge,
+                                        final MemoryPool<IncomingCacheRequest> incomingCacheRequestPool) {
 
     final var caches = new HashMap<String, CacheWrapper>(config.size(), 1);
 
     for (final var cache : config) {
       final var builtCache = buildFromConfig(cache);
-      final var wrap = new CacheWrapper(builtCache, responderBridge);
+      final var wrap = new CacheWrapper(builtCache, responderBridge, incomingCacheRequestPool);
       caches.put(cache.getName(), wrap);
     }
 

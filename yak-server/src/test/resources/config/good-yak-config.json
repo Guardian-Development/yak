@@ -1,5 +1,19 @@
 {
   "port": 9000,
+  "networkBufferPool": {
+    "poolSize": 50,
+    "fillOnCreation": true,
+    "bufferSize": 1024
+  },
+  "httpRequestMemoryPool": {
+    "poolSize": 50,
+    "fillOnCreation": true
+  },
+  "incomingCacheRequestPool": {
+    "poolSize": 50,
+    "fillOnCreation": true,
+    "bufferSize": 256
+  },
   "caches": [
     {
       "name": "example1",

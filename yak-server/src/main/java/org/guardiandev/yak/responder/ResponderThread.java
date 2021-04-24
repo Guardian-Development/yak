@@ -99,14 +99,7 @@ public final class ResponderThread extends Thread {
         progressReadyConnection(connection);
       } catch (IOException e) {
         LOG.trace("failed to progress connection", e);
-
-        try {
-          connection.channel().close();
-        } catch (IOException ex) {
-          LOG.trace("failed to close connection, abandoning", ex);
-        }
-
-        connection.cancel();
+        closeConnection(connection);
       }
 
       connectionIterator.remove();
@@ -115,27 +108,43 @@ public final class ResponderThread extends Thread {
 
   private void progressReadyConnection(final SelectionKey connection) throws IOException {
     if (connection.isWritable()) {
-      final var response = (Responder) connection.attachment();
-      final var complete = response.progress();
+      final var responder = (Responder) connection.attachment();
+      final var complete = responder.progress();
       if (complete) {
-        connection.cancel();
-        connection.channel().close();
+        closeConnection(connection);
       }
     }
   }
 
   private void registerConnectionWithSelector(final Responder responder) {
-    final var connection = responder.getSocket();
     try {
+      final var connection = responder.getSocket();
       connection.register(respondingSelector, SelectionKey.OP_WRITE, responder);
     } catch (ClosedChannelException e) {
       LOG.trace("failed to register responder with selector", e);
+      closeConnection(responder);
+    }
+  }
 
-      try {
-        connection.close();
-      } catch (IOException ex) {
-        LOG.trace("failed to close connection, abandoning", ex);
+  private void closeConnection(final Responder responder) {
+    try {
+      responder.getSocket().close();
+      responder.cleanup();
+    } catch (IOException ex) {
+      LOG.trace("failed to close connection, abandoning", ex);
+    }
+  }
+
+  private void closeConnection(final SelectionKey connection) {
+    try {
+      final var responder = (Responder) connection.attachment();
+      if (responder != null) {
+        responder.cleanup();
       }
+      connection.cancel();
+      connection.channel().close();
+    } catch (IOException ex) {
+      LOG.trace("failed to close connection, abandoning", ex);
     }
   }
 }

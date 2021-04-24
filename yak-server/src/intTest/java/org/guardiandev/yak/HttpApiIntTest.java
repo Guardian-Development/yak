@@ -1,6 +1,8 @@
 package org.guardiandev.yak;
 
 import org.guardiandev.yak.config.YakCacheConfig;
+import org.guardiandev.yak.config.YakMemoryPoolBufferConfig;
+import org.guardiandev.yak.config.YakMemoryPoolConfig;
 import org.guardiandev.yak.config.YakServerConfig;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -26,6 +28,17 @@ final class HttpApiIntTest {
     void startServer() {
         final var config = new YakServerConfig()
                 .setPort(9911)
+                .setNetworkBufferPool(new YakMemoryPoolBufferConfig()
+                        .setPoolSize(50)
+                        .setFillOnCreation(true)
+                        .setBufferSize(1024))
+                .setHttpRequestMemoryPool(new YakMemoryPoolConfig()
+                        .setPoolSize(50)
+                        .setFillOnCreation(true))
+                .setIncomingCacheRequestPool(new YakMemoryPoolBufferConfig()
+                        .setPoolSize(50)
+                        .setFillOnCreation(true)
+                        .setBufferSize(256))
                 .setCaches(List.of(new YakCacheConfig()
                         .setName("intTest")
                         .setFixedValueSize(50)

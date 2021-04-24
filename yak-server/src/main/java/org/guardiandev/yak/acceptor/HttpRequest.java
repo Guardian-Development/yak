@@ -3,6 +3,7 @@ package org.guardiandev.yak.acceptor;
 import java.util.HashMap;
 
 public final class HttpRequest {
+
   private String method;
   private String requestUri;
   private String httpVersion;

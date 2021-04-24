@@ -9,4 +9,5 @@ public interface Responder {
   void bufferResponse(final Result result, final ByteBuffer body);
   boolean progress() throws IOException;
   SocketChannel getSocket();
+  void cleanup();
 }

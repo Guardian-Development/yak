@@ -13,9 +13,8 @@ public final class IncomingCacheRequest {
 
   private final ByteBuffer content;
 
-  public IncomingCacheRequest() {
-    // TODO: memory pool
-    this.content = ByteBuffer.allocate(512);
+  public IncomingCacheRequest(final int bufferSize) {
+    this.content = ByteBuffer.allocateDirect(bufferSize);
   }
 
   public IncomingCacheRequestType getType() {

@@ -1,6 +1,7 @@
 package org.guardiandev.yak.responder;
 
 import org.guardiandev.yak.http.Constants;
+import org.guardiandev.yak.pool.MemoryPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,12 +14,13 @@ public final class HttpResponder implements Responder {
   private static final Logger LOG = LoggerFactory.getLogger(HttpResponder.class);
 
   private final SocketChannel rawConnection;
+  private final MemoryPool<ByteBuffer> networkBufferPool;
   private final ByteBuffer writeBuffer;
 
-  public HttpResponder(final SocketChannel rawConnection) {
+  public HttpResponder(final SocketChannel rawConnection, final MemoryPool<ByteBuffer> networkBufferPool) {
     this.rawConnection = rawConnection;
-    // TODO: memory pool
-    this.writeBuffer = ByteBuffer.allocate(512);
+    this.networkBufferPool = networkBufferPool;
+    this.writeBuffer = networkBufferPool.take();
   }
 
   @Override
@@ -77,5 +79,10 @@ public final class HttpResponder implements Responder {
   @Override
   public SocketChannel getSocket() {
     return rawConnection;
+  }
+
+  @Override
+  public void cleanup() {
+    networkBufferPool.returnToPool(writeBuffer);
   }
 }

@@ -6,4 +6,5 @@ interface IncomingConnection {
   boolean progress() throws IOException;
   boolean hasError();
   IncomingCacheRequest getRequest();
+  void cleanup();
 }

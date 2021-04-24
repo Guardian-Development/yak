@@ -3,6 +3,7 @@ package org.guardiandev.yak.cacheprogression;
 import org.agrona.concurrent.OneToOneConcurrentArrayQueue;
 import org.guardiandev.yak.YakCache;
 import org.guardiandev.yak.acceptor.IncomingCacheRequest;
+import org.guardiandev.yak.pool.MemoryPool;
 import org.guardiandev.yak.responder.CacheResponse;
 import org.guardiandev.yak.responder.CacheResponseToResponderBridge;
 
@@ -12,13 +13,17 @@ public final class CacheWrapper {
 
   private final YakCache<String, ByteBuffer> cache;
   private final CacheResponseToResponderBridge responderBridge;
+  private final MemoryPool<IncomingCacheRequest> incomingCacheRequestPool;
   private final OneToOneConcurrentArrayQueue<IncomingCacheRequest> incomingCacheRequests;
   private final CacheResponse cacheResponse;
 
-  public CacheWrapper(final YakCache<String, ByteBuffer> cache, final CacheResponseToResponderBridge responderBridge) {
+  public CacheWrapper(final YakCache<String, ByteBuffer> cache,
+                      final CacheResponseToResponderBridge responderBridge,
+                      final MemoryPool<IncomingCacheRequest> incomingCacheRequestPool) {
 
     this.cache = cache;
     this.responderBridge = responderBridge;
+    this.incomingCacheRequestPool = incomingCacheRequestPool;
     this.incomingCacheRequests = new OneToOneConcurrentArrayQueue<>(100);
     this.cacheResponse = new CacheResponse();
   }
@@ -46,6 +51,8 @@ public final class CacheWrapper {
     }
 
     responderBridge.acceptCacheResponse(cacheResponse);
+
+    incomingCacheRequestPool.returnToPool(request);
   }
 
   private void processGetRequest(final IncomingCacheRequest request) {

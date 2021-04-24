@@ -7,9 +7,9 @@ import org.guardiandev.yak.cacheprogression.CacheProgressionThread;
 import org.guardiandev.yak.cacheprogression.IncomingConnectionToCacheWrapperBridge;
 import org.guardiandev.yak.config.YakConfigFromJsonBuilder;
 import org.guardiandev.yak.config.YakServerConfig;
+import org.guardiandev.yak.pool.Factory;
 import org.guardiandev.yak.responder.CacheResponseToResponderBridge;
 import org.guardiandev.yak.responder.ResponderThread;
-
 import java.nio.file.Path;
 
 public final class YakServerRunner {
@@ -25,13 +25,25 @@ public final class YakServerRunner {
   }
 
   public boolean init() {
+    final var networkBufferPool = Factory.networkBufferPool(
+            config.getNetworkBufferPool().getPoolSize(),
+            config.getNetworkBufferPool().getBufferSize(),
+            config.getNetworkBufferPool().isFillOnCreation());
+    final var httpRequestMemoryPool = Factory.httpRequestPool(
+            config.getHttpRequestMemoryPool().getPoolSize(),
+            config.getHttpRequestMemoryPool().isFillOnCreation());
+    final var incomingCacheRequestMemoryPool = Factory.incomingCacheRequestPool(
+            config.getIncomingCacheRequestPool().getPoolSize(),
+            config.getIncomingCacheRequestPool().getBufferSize(),
+            config.getIncomingCacheRequestPool().isFillOnCreation());
+
     responderThread = new ResponderThread();
 
     final var cacheResponseBridge = new CacheResponseToResponderBridge(responderThread);
     final var cacheInit = new CacheInitializer(config.getCaches());
-    final var cacheNameToCache = cacheInit.init(cacheResponseBridge);
+    final var cacheNameToCache = cacheInit.init(cacheResponseBridge, incomingCacheRequestMemoryPool);
 
-    final var connectionFactory = new IncomingConnectionFactory();
+    final var connectionFactory = new IncomingConnectionFactory(networkBufferPool, httpRequestMemoryPool, incomingCacheRequestMemoryPool);
     final var connectionCacheBridge = new IncomingConnectionToCacheWrapperBridge(cacheNameToCache);
 
     acceptorThread = new ConnectionAcceptorThread(config.getPort(), connectionFactory, connectionCacheBridge);

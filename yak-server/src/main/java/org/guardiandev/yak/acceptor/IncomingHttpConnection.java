@@ -1,6 +1,7 @@
 package org.guardiandev.yak.acceptor;
 
 import org.guardiandev.yak.http.Constants;
+import org.guardiandev.yak.pool.MemoryPool;
 import org.guardiandev.yak.responder.HttpResponder;
 
 import java.io.IOException;
@@ -16,26 +17,35 @@ public final class IncomingHttpConnection implements IncomingConnection {
   }
 
   private final SocketChannel rawConnection;
+  private final MemoryPool<ByteBuffer> networkBufferPool;
+  private final MemoryPool<HttpRequest> httpRequestMemoryPool;
+  private final ByteBuffer readBuffer;
   private final HttpRequest request;
+  private final MemoryPool<IncomingCacheRequest> incomingCacheRequestMemoryPool;
+
   private boolean isComplete;
   private boolean hasError;
-
-  private final ByteBuffer readBuffer;
   private int processedPosition;
   private int processedCommittedPosition;
 
   private ProcessingStage stage;
 
-  public IncomingHttpConnection(final SocketChannel rawConnection, final HttpRequest request) {
+  public IncomingHttpConnection(final SocketChannel rawConnection,
+                                final MemoryPool<ByteBuffer> networkBufferPool,
+                                final MemoryPool<HttpRequest> httpRequestMemoryPool,
+                                final MemoryPool<IncomingCacheRequest> incomingCacheRequestMemoryPool) {
     this.rawConnection = rawConnection;
-    this.request = request;
+    this.networkBufferPool = networkBufferPool;
+    this.httpRequestMemoryPool = httpRequestMemoryPool;
+    this.request = httpRequestMemoryPool.take();
+    this.incomingCacheRequestMemoryPool = incomingCacheRequestMemoryPool;
     this.isComplete = false;
-    // TODO: memory pool read buffers
-    this.readBuffer = ByteBuffer.allocate(512);
+    this.readBuffer = networkBufferPool.take();
     this.stage = ProcessingStage.REQUEST_URI;
     this.processedPosition = 0;
     this.processedCommittedPosition = 0;
 
+    readBuffer.clear();
     request.reset();
   }
 
@@ -172,12 +182,21 @@ public final class IncomingHttpConnection implements IncomingConnection {
     readBuffer.position(request.getBodyStartIndex());
     readBuffer.limit(readBuffer.position() + request.getBodyLength());
 
-    return new IncomingCacheRequest()
-            .setResponder(new HttpResponder(rawConnection))
+    final var request = incomingCacheRequestMemoryPool.take();
+    request.reset();
+
+    return request
+            .setResponder(new HttpResponder(rawConnection, networkBufferPool))
             .setCacheName(cache)
             .setKeyName(key)
             .setType(type)
             .setContent(readBuffer);
+  }
+
+  @Override
+  public void cleanup() {
+    networkBufferPool.returnToPool(readBuffer);
+    httpRequestMemoryPool.returnToPool(request);
   }
 
   private IncomingCacheRequestType typeFromMethod(final String httpMethod) {

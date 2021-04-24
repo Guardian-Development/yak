@@ -147,6 +147,7 @@ public final class ConnectionAcceptorThread extends Thread {
       }
 
       final var request = incomingConnection.getRequest();
+      incomingConnection.cleanup();
       connection.cancel();
       cacheWrapperBridge.acceptIncomingConnection(request);
     }
@@ -154,6 +155,10 @@ public final class ConnectionAcceptorThread extends Thread {
 
   private void closeConnection(final SelectionKey connection) {
     try {
+      final var incomingConnection = (IncomingConnection) connection.attachment();
+      if (incomingConnection != null) {
+        incomingConnection.cleanup();
+      }
       connection.cancel();
       connection.channel().close();
     } catch (IOException ex) {
