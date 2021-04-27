@@ -1,9 +1,14 @@
 package org.guardiandev.yak.responder;
 
+/**
+ * Represents the response type, code, and reason to a request.
+ */
 public enum Result {
   KEY_FOUND("200", "Key Found"),
   KEY_NOT_FOUND("404", "Not Found Key"),
-  KEY_CREATED("201", "Created Key");
+  CACHE_NOT_FOUND("404", "Not Found Cache"),
+  KEY_CREATED("201", "Created Key"),
+  INTERNAL_ERROR("500", "Internal Server Error");
 
   private final String code;
   private final String reasonPhrase;

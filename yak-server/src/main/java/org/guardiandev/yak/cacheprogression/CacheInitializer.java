@@ -1,5 +1,10 @@
 package org.guardiandev.yak.cacheprogression;
 
+
+import java.nio.ByteBuffer;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.guardiandev.yak.YakCache;
 import org.guardiandev.yak.YakCacheBuilder;
@@ -11,15 +16,16 @@ import org.guardiandev.yak.responder.CacheResponseToResponderBridge;
 import org.guardiandev.yak.serialization.YakValueSerializer;
 import org.guardiandev.yak.storage.YakValueStorage;
 
-import java.nio.ByteBuffer;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 /**
- * example.
+ * Responsible for initializing the caches from config.
+ * <p>
+ * this adds a further cache wrapper for the key of {@link #NULL_CACHE_RESPONDER_KEY} which can be used to handle
+ * any requests for caches that do not exist.
+ * </p>
  */
 public final class CacheInitializer {
+
+  public static String NULL_CACHE_RESPONDER_KEY = "null_cache_wrapper";
 
   private final List<YakCacheConfig> config;
 
@@ -27,6 +33,17 @@ public final class CacheInitializer {
     this.config = config;
   }
 
+  /**
+   * Initalise the cache wrappers, assigning the name of the cache to wrapper.
+   * <p>
+   * this also inserts a cache wrapper at the {@link #NULL_CACHE_RESPONDER_KEY} key, which will handle any
+   * requests that are for a non-existent cache.
+   * </p>
+   *
+   * @param responderBridge          where caches should send results after execution
+   * @param incomingCacheRequestPool the pool to return cache requests to when they have been processed
+   * @return cache name to cache wrapper
+   */
   public Map<String, CacheWrapper> init(final CacheResponseToResponderBridge responderBridge,
                                         final MemoryPool<IncomingCacheRequest> incomingCacheRequestPool) {
 
@@ -37,6 +54,8 @@ public final class CacheInitializer {
       final var wrap = new CacheWrapper(builtCache, responderBridge, incomingCacheRequestPool);
       caches.put(cache.getName(), wrap);
     }
+
+    caches.put(NULL_CACHE_RESPONDER_KEY, new CacheWrapper(null, responderBridge, incomingCacheRequestPool));
 
     return caches;
   }

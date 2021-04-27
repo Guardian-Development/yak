@@ -1,11 +1,15 @@
 package org.guardiandev.yak.pool;
 
+import java.util.ArrayDeque;
+import java.util.function.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayDeque;
-import java.util.function.Supplier;
-
+/**
+ * A memory pool of type T, where objects are taken out of the pool when in use, and returned to the pool for reuse.
+ *
+ * @param <T> the type of object to pool
+ */
 public final class MemoryPool<T> {
 
   private static final Logger LOG = LoggerFactory.getLogger(MemoryPool.class);
@@ -13,6 +17,13 @@ public final class MemoryPool<T> {
   private final Supplier<T> factory;
   private final ArrayDeque<T> pool;
 
+  /**
+   * Creates a memory pool of type T.
+   *
+   * @param factory        used to create each object in the pool
+   * @param poolSize       the initial size of the pool to create
+   * @param fillOnCreation whether to create the objects in the pool on creation or not
+   */
   public MemoryPool(final Supplier<T> factory, final int poolSize, final boolean fillOnCreation) {
 
     this.factory = factory;
@@ -25,6 +36,11 @@ public final class MemoryPool<T> {
     }
   }
 
+  /**
+   * Take an object from the pool, if there is no remaining objects in the pool one is created.
+   *
+   * @return the object from the pool
+   */
   public T take() {
     final var pooledObject = pool.poll();
     if (pooledObject == null) {
@@ -35,6 +51,11 @@ public final class MemoryPool<T> {
     return pooledObject;
   }
 
+  /**
+   * Return the object to the pool, making it available within the pool again.
+   *
+   * @param pooledObject the object to pool
+   */
   public void returnToPool(final T pooledObject) {
     pool.addLast(pooledObject);
   }

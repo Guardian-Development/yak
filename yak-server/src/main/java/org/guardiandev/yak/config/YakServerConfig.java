@@ -2,6 +2,9 @@ package org.guardiandev.yak.config;
 
 import java.util.List;
 
+/**
+ * Config POJO for a yak server config.
+ */
 public final class YakServerConfig {
 
   private Integer port;

@@ -1,10 +1,12 @@
 package org.guardiandev.yak.pool;
 
+import java.nio.ByteBuffer;
 import org.guardiandev.yak.acceptor.HttpRequest;
 import org.guardiandev.yak.acceptor.IncomingCacheRequest;
 
-import java.nio.ByteBuffer;
-
+/**
+ * A factory which contains factory methods for every memory pool within the server.
+ */
 public final class Factory {
 
   private Factory() {

@@ -1,13 +1,15 @@
 package org.guardiandev.yak.acceptor;
 
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.SocketChannel;
 import org.guardiandev.yak.http.Constants;
 import org.guardiandev.yak.pool.MemoryPool;
 import org.guardiandev.yak.responder.HttpResponder;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.channels.SocketChannel;
-
+/**
+ * Provides the http protocol over a tcp socket, reading an incoming request.
+ */
 public final class IncomingHttpConnection implements IncomingConnection {
 
   private enum ProcessingStage {
@@ -30,6 +32,14 @@ public final class IncomingHttpConnection implements IncomingConnection {
 
   private ProcessingStage stage;
 
+  /**
+   * Creates a new incoming http connection, taking resources off the memory pools provided on creation.
+   *
+   * @param rawConnection                  the raw tcp connection
+   * @param networkBufferPool              the pool to take a network byte buffer from
+   * @param httpRequestMemoryPool          the pool to take a http request from
+   * @param incomingCacheRequestMemoryPool the pool to take an incoming cache request from
+   */
   public IncomingHttpConnection(final SocketChannel rawConnection,
                                 final MemoryPool<ByteBuffer> networkBufferPool,
                                 final MemoryPool<HttpRequest> httpRequestMemoryPool,
@@ -49,6 +59,9 @@ public final class IncomingHttpConnection implements IncomingConnection {
     request.reset();
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public boolean progress() throws IOException {
 
@@ -165,11 +178,17 @@ public final class IncomingHttpConnection implements IncomingConnection {
     request.setBodyLength(length);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public boolean hasError() {
     return hasError;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public IncomingCacheRequest getRequest() {
     assert isComplete : "can not get request for incomplete incoming connection";
@@ -193,6 +212,9 @@ public final class IncomingHttpConnection implements IncomingConnection {
             .setContent(readBuffer);
   }
 
+  /**
+   * Returns any resources we used to their respective memory pools.
+   */
   @Override
   public void cleanup() {
     networkBufferPool.returnToPool(readBuffer);

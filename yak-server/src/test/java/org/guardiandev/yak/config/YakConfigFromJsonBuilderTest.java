@@ -1,11 +1,10 @@
 package org.guardiandev.yak.config;
 
-import org.junit.jupiter.api.Test;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.nio.file.Path;
 import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.Test;
 
 class YakConfigFromJsonBuilderTest {
 

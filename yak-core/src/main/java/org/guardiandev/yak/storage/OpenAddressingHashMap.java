@@ -1,7 +1,6 @@
 package org.guardiandev.yak.storage;
 
 import java.util.UUID;
-
 import org.guardiandev.yak.utils.IntegerExtensions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

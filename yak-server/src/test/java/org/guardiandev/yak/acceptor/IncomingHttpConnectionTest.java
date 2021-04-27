@@ -1,5 +1,10 @@
 package org.guardiandev.yak.acceptor;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.SocketChannel;
 import org.guardiandev.yak.pool.Factory;
 import org.guardiandev.yak.pool.MemoryPool;
 import org.guardiandev.yak.testsupport.ByteLimitResponder;
@@ -7,12 +12,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.channels.SocketChannel;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(MockitoExtension.class)
 class IncomingHttpConnectionTest {
@@ -22,7 +21,7 @@ class IncomingHttpConnectionTest {
   private final MemoryPool<IncomingCacheRequest> incomingCacheRequestPool = Factory.incomingCacheRequestPool(1, 256, true);
 
   @Test
-  void shouldProcessRequestLineAsContentUpToFirstCRLF(@Mock SocketChannel channel) throws IOException {
+  void shouldProcessRequestLineAsContentUpToFirstCrlf(@Mock SocketChannel channel) throws IOException {
     // Arrange
     final var unitUnderTest = new IncomingHttpConnection(channel, networkBufferPool, httpRequestPool, incomingCacheRequestPool);
     ByteLimitResponder.returnBytesFromMock(channel, "GET /cache/test HTTP/1.1 \r\n");
@@ -41,7 +40,7 @@ class IncomingHttpConnectionTest {
   }
 
   @Test
-  void shouldProcessRequestLineAsContentUpToFirstCRLFWithMultipleSocketReads(@Mock SocketChannel channel) throws IOException {
+  void shouldProcessRequestLineAsContentUpToFirstCrlfWithMultipleSocketReads(@Mock SocketChannel channel) throws IOException {
     // Arrange
     final var unitUnderTest = new IncomingHttpConnection(channel, networkBufferPool, httpRequestPool, incomingCacheRequestPool);
     ByteLimitResponder.returnBytesFromMock(channel, "GET /cache/test HTTP/1.1 \r\n", 5);

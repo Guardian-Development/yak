@@ -1,17 +1,19 @@
 package org.guardiandev.yak.acceptor;
 
-import org.agrona.LangUtil;
-import org.guardiandev.yak.cacheprogression.IncomingConnectionToCacheWrapperBridge;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.util.concurrent.atomic.AtomicBoolean;
+import org.agrona.LangUtil;
+import org.guardiandev.yak.cacheprogression.IncomingConnectionToCacheWrapperBridge;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+/**
+ * Responsible for accepting and reading the initial request in order to know how to process it downstream.
+ */
 public final class ConnectionAcceptorThread extends Thread {
 
   private static final Logger LOG = LoggerFactory.getLogger(ConnectionAcceptorThread.class);
@@ -24,6 +26,13 @@ public final class ConnectionAcceptorThread extends Thread {
   private ServerSocketChannel serverSocketChannel;
   private Selector acceptingSelector;
 
+  /**
+   * Initialise the connection acceptor thread.
+   *
+   * @param port               the port to listen for connections on
+   * @param connectionFactory  the factory to use when wrapping a new accepted connection
+   * @param cacheWrapperBridge the bridge to send incoming requests once read off the wire
+   */
   public ConnectionAcceptorThread(final int port,
                                   final IncomingConnectionFactory connectionFactory,
                                   final IncomingConnectionToCacheWrapperBridge cacheWrapperBridge) {
@@ -35,6 +44,9 @@ public final class ConnectionAcceptorThread extends Thread {
     this.isRunning = new AtomicBoolean(false);
   }
 
+  /**
+   * Marks the thread as running, opening the socket to accept connections on.
+   */
   @Override
   public synchronized void start() {
     LOG.debug("starting connection acceptor thread on port {}", port);
@@ -58,6 +70,9 @@ public final class ConnectionAcceptorThread extends Thread {
     LOG.debug("started connection acceptor thread on port {}", port);
   }
 
+  /**
+   * Marks the thread as not running, and closes the server socket to stop accepting connections.
+   */
   @Override
   public void interrupt() {
     LOG.debug("stopping connection acceptor thread due to interrupt on port {}", port);
@@ -76,11 +91,19 @@ public final class ConnectionAcceptorThread extends Thread {
     LOG.debug("stopped connection acceptor thread due to interrupt on port {}", port);
   }
 
+  /**
+   * Whether the thread is interrupted, or is not running.
+   *
+   * @return true if running, else false
+   */
   @Override
   public boolean isInterrupted() {
     return super.isInterrupted() || !isRunning.get();
   }
 
+  /**
+   * Run the thread, which iterates the selector and progresses new connections.
+   */
   @Override
   public void run() {
     while (isRunning.get()) {
@@ -88,6 +111,9 @@ public final class ConnectionAcceptorThread extends Thread {
     }
   }
 
+  /**
+   * Perform a single iteration of the thread, accepting and progressing any ready connections.
+   */
   private void tick() {
     int numberAvailable = 0;
     try {

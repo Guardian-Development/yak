@@ -1,5 +1,6 @@
 package org.guardiandev.yak;
 
+import java.nio.file.Path;
 import org.guardiandev.yak.acceptor.ConnectionAcceptorThread;
 import org.guardiandev.yak.acceptor.IncomingConnectionFactory;
 import org.guardiandev.yak.cacheprogression.CacheInitializer;
@@ -10,8 +11,10 @@ import org.guardiandev.yak.config.YakServerConfig;
 import org.guardiandev.yak.pool.Factory;
 import org.guardiandev.yak.responder.CacheResponseToResponderBridge;
 import org.guardiandev.yak.responder.ResponderThread;
-import java.nio.file.Path;
 
+/**
+ * Responsible for initialising and starting the application.
+ */
 public final class YakServerRunner {
 
   private final YakServerConfig config;
@@ -20,10 +23,20 @@ public final class YakServerRunner {
   private CacheProgressionThread cacheProgressionThread;
   private ResponderThread responderThread;
 
+  /**
+   * Initialise the server to be ran with the passed in config.
+   *
+   * @param config the config to run the server with
+   */
   public YakServerRunner(final YakServerConfig config) {
     this.config = config;
   }
 
+  /**
+   * Initialise all resources for the server, but does not run the application.
+   *
+   * @return true if initialised successfully, else false
+   */
   public boolean init() {
     final var networkBufferPool = Factory.networkBufferPool(
             config.getNetworkBufferPool().getPoolSize(),
@@ -52,24 +65,40 @@ public final class YakServerRunner {
     return true;
   }
 
+  /**
+   * Start the server, requires {@link #init()} to be called first.
+   */
   public void start() {
     responderThread.start();
     cacheProgressionThread.start();
     acceptorThread.start();
   }
 
+  /**
+   * Whether all threads within the server are running and alive.
+   *
+   * @return true if running an healthy, else false.
+   */
   public boolean isRunning() {
     return acceptorThread.isAlive() && cacheProgressionThread.isAlive() && responderThread.isAlive();
   }
 
+  /**
+   * Stop all threads within the server.
+   */
   public void stop() {
     acceptorThread.interrupt();
     cacheProgressionThread.interrupt();
     responderThread.interrupt();
   }
 
+  /**
+   * Entrypoint to the application, expects the location of the config file to passed as the first parameter.
+   *
+   * @param args command line args, first argument should be file path of config file
+   */
   public static void main(final String[] args) {
-    final var configLocation = Path.of("/Users/Joe.Honour/code/yak/yak-server/src/test/resources/config/good-yak-config.json");
+    final var configLocation = Path.of(args[0]);
     final var config = new YakConfigFromJsonBuilder(configLocation).load();
 
     final var runner = new YakServerRunner(config);

@@ -1,5 +1,8 @@
 package org.guardiandev.yak.config;
 
+/**
+ * Config POJO for a yak memory buffer pool.
+ */
 public final class YakMemoryPoolBufferConfig {
 
   private int poolSize;

@@ -2,6 +2,12 @@ package org.guardiandev.yak.acceptor;
 
 import java.util.HashMap;
 
+/**
+ * Used for storing all information obtained when processing an incoming http request.
+ * <p>
+ *   built with {@link IncomingHttpConnection}
+ * </p>
+ */
 public final class HttpRequest {
 
   private String method;
@@ -65,6 +71,11 @@ public final class HttpRequest {
     return headers.get(key);
   }
 
+  /**
+   * Reset the object ready for it to be used again in a pool.
+   *
+   * @return the same object ready for reuse
+   */
   public HttpRequest reset() {
     this.method = null;
     this.requestUri = null;

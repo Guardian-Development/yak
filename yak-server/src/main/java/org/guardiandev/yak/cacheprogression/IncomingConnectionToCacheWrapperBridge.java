@@ -1,8 +1,7 @@
 package org.guardiandev.yak.cacheprogression;
 
-import org.guardiandev.yak.acceptor.IncomingCacheRequest;
-
 import java.util.Map;
+import org.guardiandev.yak.acceptor.IncomingCacheRequest;
 
 /**
  * Provides routing for incoming connections, to the cache they need to execute over.
@@ -11,7 +10,11 @@ public final class IncomingConnectionToCacheWrapperBridge {
 
   private final Map<String, CacheWrapper> cacheNameToWrapper;
 
-  // todo: possibly have null/error cache for when caches not found
+  /**
+   * Creates the bridge.
+   *
+   * @param cacheNameToWrapper the available cache wrappers to route requests to
+   */
   public IncomingConnectionToCacheWrapperBridge(final Map<String, CacheWrapper> cacheNameToWrapper) {
     this.cacheNameToWrapper = cacheNameToWrapper;
   }
@@ -28,7 +31,13 @@ public final class IncomingConnectionToCacheWrapperBridge {
    */
   public void acceptIncomingConnection(final IncomingCacheRequest request) {
     final var name = request.getCacheName();
-    final var cache = cacheNameToWrapper.get(name);
+
+    var cache = cacheNameToWrapper.get(name);
+
+    if (cache == null) {
+      cache = cacheNameToWrapper.get(CacheInitializer.NULL_CACHE_RESPONDER_KEY);
+    }
+
     cache.bufferRequest(request);
   }
 }

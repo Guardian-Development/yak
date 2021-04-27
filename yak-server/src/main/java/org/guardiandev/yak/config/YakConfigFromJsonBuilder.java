@@ -1,12 +1,11 @@
 package org.guardiandev.yak.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.IOException;
+import java.nio.file.Path;
 import org.agrona.LangUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.nio.file.Path;
 
 /**
  * Loads the yak config from a JSON file, being as lenient as possible in data validation.

@@ -1,16 +1,18 @@
 package org.guardiandev.yak.responder;
 
-import org.agrona.LangUtil;
-import org.agrona.concurrent.OneToOneConcurrentArrayQueue;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.util.concurrent.atomic.AtomicBoolean;
+import org.agrona.LangUtil;
+import org.agrona.concurrent.OneToOneConcurrentArrayQueue;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+/**
+ * Responsible for sending responses to requests.
+ */
 public final class ResponderThread extends Thread {
 
   private static final Logger LOG = LoggerFactory.getLogger(ResponderThread.class);
@@ -19,6 +21,9 @@ public final class ResponderThread extends Thread {
   private final OneToOneConcurrentArrayQueue<Responder> outgoingResponses;
   private Selector respondingSelector;
 
+  /**
+   * Creates the responder thread.
+   */
   public ResponderThread() {
     super("responder-thread");
 
@@ -26,6 +31,9 @@ public final class ResponderThread extends Thread {
     this.outgoingResponses = new OneToOneConcurrentArrayQueue<>(100);
   }
 
+  /**
+   * Marks the thread as running, opening the selector which handles the connections being managed.
+   */
   @Override
   public synchronized void start() {
     LOG.debug("starting responder thread");
@@ -43,6 +51,9 @@ public final class ResponderThread extends Thread {
     LOG.debug("started responder thread");
   }
 
+  /**
+   * Marks the thread as not running, and closes the selector handling current connections.
+   */
   @Override
   public void interrupt() {
     LOG.debug("stopping responder thread due to interrupt");
@@ -60,15 +71,29 @@ public final class ResponderThread extends Thread {
     LOG.debug("stopped responder thread due to interrupt");
   }
 
+  /**
+   * Whether the thread is interrupted, or is not running.
+   *
+   * @return true if running, else false
+   */
   @Override
   public boolean isInterrupted() {
     return super.isInterrupted() || !isRunning.get();
   }
 
+  /**
+   * Buffer a response to be handled by this thread.
+   *
+   * @param responder the responder to buffer
+   * @return true if buffered successfully, else false.
+   */
   public boolean bufferResponse(final Responder responder) {
     return outgoingResponses.offer(responder);
   }
 
+  /**
+   * Iterates the selector and progresses all ready connections.
+   */
   @Override
   public void run() {
     while (isRunning.get()) {

@@ -1,9 +1,11 @@
 package org.guardiandev.yak.acceptor;
 
+import java.nio.ByteBuffer;
 import org.guardiandev.yak.responder.Responder;
 
-import java.nio.ByteBuffer;
-
+/**
+ * Represents an incoming cache request, with all the information needed to execute and respond to the request.
+ */
 public final class IncomingCacheRequest {
 
   private IncomingCacheRequestType type;
@@ -48,6 +50,15 @@ public final class IncomingCacheRequest {
     return content;
   }
 
+  /**
+   * Copies the buffer into the {@link #content} buffer, using its current position and limit.
+   * <p>
+   * the buffers position is not reset after writing, so it will be left with a position equal to limit after.
+   * </p>
+   *
+   * @param buffer the content to copy
+   * @return self
+   */
   public IncomingCacheRequest setContent(final ByteBuffer buffer) {
     content.put(buffer);
     content.flip();
@@ -63,11 +74,18 @@ public final class IncomingCacheRequest {
     return this;
   }
 
-  public void reset() {
+  /**
+   * Reset the object ready for it to be used again in a pool.
+   *
+   * @return the same object ready for reuse
+   */
+  public IncomingCacheRequest reset() {
     this.type = null;
     this.cacheName = null;
     this.keyName = null;
     this.responder = null;
     this.content.clear();
+
+    return this;
   }
 }

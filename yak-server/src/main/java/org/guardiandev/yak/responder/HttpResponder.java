@@ -1,14 +1,16 @@
 package org.guardiandev.yak.responder;
 
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.SocketChannel;
 import org.guardiandev.yak.http.Constants;
 import org.guardiandev.yak.pool.MemoryPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.channels.SocketChannel;
-
+/**
+ * Provides the http protocol over a tcp socket, sending a http response to the client.
+ */
 public final class HttpResponder implements Responder {
 
   private static final Logger LOG = LoggerFactory.getLogger(HttpResponder.class);
@@ -17,12 +19,24 @@ public final class HttpResponder implements Responder {
   private final MemoryPool<ByteBuffer> networkBufferPool;
   private final ByteBuffer writeBuffer;
 
+  /**
+   * Creates a http responder.
+   *
+   * @param rawConnection     the tcp connection to send the response to
+   * @param networkBufferPool the pool of network buffers to take from
+   */
   public HttpResponder(final SocketChannel rawConnection, final MemoryPool<ByteBuffer> networkBufferPool) {
     this.rawConnection = rawConnection;
     this.networkBufferPool = networkBufferPool;
     this.writeBuffer = networkBufferPool.take();
   }
 
+  /**
+   * Build the http response in full, and place it in the {@link #writeBuffer} ready to be sent.
+   *
+   * @param responseCode the response type to build
+   * @param body         the optional response body to include
+   */
   @Override
   public void bufferResponse(final Result responseCode, final ByteBuffer body) {
     buildRequestLine(responseCode);
@@ -64,6 +78,12 @@ public final class HttpResponder implements Responder {
     writeBuffer.put(body);
   }
 
+  /**
+   * Write the {@link #writeBuffer} to the {@link #rawConnection}.
+   *
+   * @return true if finished, else false.
+   * @throws IOException if unable to write to socket
+   */
   @Override
   public boolean progress() throws IOException {
 
@@ -76,11 +96,17 @@ public final class HttpResponder implements Responder {
     return !writeBuffer.hasRemaining();
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public SocketChannel getSocket() {
     return rawConnection;
   }
 
+  /**
+   * Return the write buffer to the pool to be used again.
+   */
   @Override
   public void cleanup() {
     networkBufferPool.returnToPool(writeBuffer);
