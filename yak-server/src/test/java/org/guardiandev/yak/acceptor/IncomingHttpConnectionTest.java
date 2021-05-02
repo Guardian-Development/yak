@@ -16,12 +16,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class IncomingHttpConnectionTest {
 
-  private final MemoryPool<ByteBuffer> networkBufferPool = Factory.networkBufferPool(1, 256, true);
-  private final MemoryPool<HttpRequest> httpRequestPool = Factory.httpRequestPool(1, true);
-  private final MemoryPool<IncomingCacheRequest> incomingCacheRequestPool = Factory.incomingCacheRequestPool(1, 256, true);
+  private final MemoryPool<ByteBuffer> networkBufferPool = Factory.networkBufferPool(2, 256, true);
+  private final MemoryPool<HttpRequest> httpRequestPool = Factory.httpRequestPool(2, true);
+  private final MemoryPool<IncomingCacheRequest> incomingCacheRequestPool = Factory.incomingCacheRequestPool(2, 256, true);
 
   @Test
-  void shouldProcessRequestLineAsContentUpToFirstCrlf(@Mock SocketChannel channel) throws IOException {
+  void shouldExtractHttpRequestLineFromRequest(@Mock SocketChannel channel) throws IOException {
     // Arrange
     final var unitUnderTest = new IncomingHttpConnection(channel, networkBufferPool, httpRequestPool, incomingCacheRequestPool);
     ByteLimitResponder.returnBytesFromMock(channel, "GET /cache/test HTTP/1.1 \r\n");
@@ -31,6 +31,8 @@ class IncomingHttpConnectionTest {
 
     // Assert
     unitUnderTest.cleanup();
+
+    httpRequestPool.take();
     final var request = httpRequestPool.take();
     assertThat(request).usingRecursiveComparison()
             .isEqualTo(new HttpRequest()
@@ -40,21 +42,21 @@ class IncomingHttpConnectionTest {
   }
 
   @Test
-  void shouldProcessRequestLineAsContentUpToFirstCrlfWithMultipleSocketReads(@Mock SocketChannel channel) throws IOException {
+  void shouldExtractHttpRequestLineFromRequestWithMultipleSocketReads(@Mock SocketChannel channel) throws IOException {
     // Arrange
     final var unitUnderTest = new IncomingHttpConnection(channel, networkBufferPool, httpRequestPool, incomingCacheRequestPool);
-    ByteLimitResponder.returnBytesFromMock(channel, "GET /cache/test HTTP/1.1 \r\n", 5);
+    final var requestInput = "GET /cache/test HTTP/1.1 \r\n";
+    ByteLimitResponder.returnBytesFromMock(channel, requestInput, 1);
 
-    // Act - 27 bytes to write, limit to 5 bytes per write
-    unitUnderTest.progress();
-    unitUnderTest.progress();
-    unitUnderTest.progress();
-    unitUnderTest.progress();
-    unitUnderTest.progress();
-    unitUnderTest.progress();
+    // Act - 27 bytes total in message, 1 byte read per iteration
+    for (var i = 0; i < requestInput.length(); i++) {
+      unitUnderTest.progress();
+    }
 
     // Assert
     unitUnderTest.cleanup();
+
+    httpRequestPool.take();
     final var request = httpRequestPool.take();
     assertThat(request).usingRecursiveComparison()
             .isEqualTo(new HttpRequest()
