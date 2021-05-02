@@ -217,6 +217,85 @@ class OpenAddressingHashMapTest {
     assertThat(deleted).isTrue();
   }
 
+  @Test
+  void shouldReturnKeyWhenKeyExistsInStartingLocation() {
+    // Arrange
+    final var underTest = new OpenAddressingHashMap<FixedHashCodeOf>(4);
+    final var key1 = new FixedHashCodeOf(2);  // 2 % 4 = location 2
+
+    underTest.getExistingOrAssign(key1);
+
+    // Act
+    final var existing = underTest.get(key1);
+
+    // Assert
+    assertThat(existing).isEqualTo(2);
+  }
+
+  @Test
+  void shouldReturnKeyWhenSearchIsNeededForKey() {
+    // Arrange
+    final var underTest = new OpenAddressingHashMap<FixedHashCodeOf>(4);
+    final var key1 = new FixedHashCodeOf(2);  // 2 % 4 = location 2
+    final var key2 = new FixedHashCodeOf(6);  // 6 % 4 = location 2
+
+    underTest.getExistingOrAssign(key1);
+    underTest.getExistingOrAssign(key2);
+
+    // Act - 1 + (6 % 3) = 1
+    // 2 + 1 = 3
+    final var existing = underTest.get(key2);
+
+    // Assert
+    assertThat(existing).isEqualTo(3);
+  }
+
+  @Test
+  void shouldReturnNullIfKeyDoesNotExistInStartingPosition() {
+    // Arrange
+    final var underTest = new OpenAddressingHashMap<FixedHashCodeOf>(4);
+    final var key1 = new FixedHashCodeOf(2);  // 2 % 4 = location 2
+
+    underTest.getExistingOrAssign(key1);
+
+    // Act
+    final var existing = underTest.get(new FixedHashCodeOf(3));
+
+    // Assert
+    assertThat(existing).isNull();
+  }
+
+  @Test
+  void shouldReturnNullIfKeyDoesNotExistWhenSearching() {
+    // Arrange
+    final var underTest = new OpenAddressingHashMap<FixedHashCodeOf>(4);
+    final var key1 = new FixedHashCodeOf(2);  // 2 % 4 = location 2
+    final var key2 = new FixedHashCodeOf(6);  // 6 % 4 = location 2
+
+    underTest.getExistingOrAssign(key1);
+
+    // Act
+    final var existing = underTest.get(key2);
+
+    // Assert
+    assertThat(existing).isNull();
+  }
+
+  @Test
+  void shouldReturnNullIfKeyWithSameHashcodeButDifferentEqualsInSlot() {
+    // Arrange
+    final var underTest = new OpenAddressingHashMap<FixedHashCodeOf>(4);
+    final var key1 = new FixedHashCodeOf(2);  // 2 % 4 = location 2
+
+    underTest.getExistingOrAssign(key1);
+
+    // Act
+    final var existing = underTest.get(new FixedHashCodeOf(6));
+
+    // Assert
+    assertThat(existing).isNull();
+  }
+
   private static final class FixedHashCodeOf {
 
     private final int hashCodeValue;

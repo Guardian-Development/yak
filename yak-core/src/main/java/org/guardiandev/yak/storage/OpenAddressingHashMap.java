@@ -48,6 +48,67 @@ public final class OpenAddressingHashMap<K> {
   }
 
   /**
+   * Searches for the location of the key within the hash map.
+   *
+   * @param key the key to search for
+   * @return the location of the key if it exists, else null
+   */
+  public Integer get(final K key) {
+    LOG.trace("[name={},key={}] getting position for key", name, key);
+
+    if (key == null) {
+      LOG.trace("[name={},key={}] null key not stored, returning null", name, key);
+      return null;
+    }
+
+    final var hash = key.hashCode();
+    final var position = Math.abs(hash % keySpace);
+    final var currentEntryAtPosition = keys[position];
+
+    // if location is empty, return null
+    if (currentEntryAtPosition == null) {
+      LOG.trace("[name={},key={}] key does not exist", name, key);
+      return null;
+    }
+
+    if (currentEntryAtPosition.equals(key)) {
+      LOG.trace("[name={},key={}] key does exist as position {}", name, key, position);
+      return position;
+    }
+
+    // collision happened, search for potential key in remaining set
+    final var searchIncrement = 1 + (hash % mprime);
+    var searchingPosition = (position + searchIncrement) % keySpace;
+
+    LOG.trace("[name={},key={}] initial position {} not equal to key, searching for key with increment {}", name, key, position, searchIncrement);
+
+    while (searchingPosition != position) {
+      final var searchingEntry = keys[searchingPosition];
+
+      LOG.trace("[name={},key={}] searching position {}", name, key, searchingPosition);
+
+      // if empty, key cant be present already, assign to this slot
+      if (searchingEntry == null) {
+        LOG.trace("[name={},key={}] key does exist as position {}", name, key, searchingPosition);
+        return null;
+      }
+
+      // if equal, found key, return position
+      if (searchingEntry.equals(key)) {
+        LOG.trace("[name={},key={}] key does exist as position {}", name, key, searchingPosition);
+        return searchingPosition;
+      }
+
+      // not found, but not hit exit condition, continue searching
+      searchingPosition = (searchingPosition + searchIncrement) % keySpace;
+      LOG.trace("[name={},key={}] stopping condition not met, continuing search", name, key);
+    }
+
+    LOG.trace("[name={},key={}] key does not exist", name, key);
+    return null;
+  }
+
+  /**
    * Assigns the key to a fixed location in the hash map.
    *
    * <p>

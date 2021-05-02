@@ -5,6 +5,7 @@ import static org.guardiandev.yak.events.YakEventListener.YakEvent.GET_CACHE_MIS
 import static org.guardiandev.yak.events.YakEventListener.YakEvent.PUT;
 
 import java.util.List;
+import java.util.Objects;
 import org.guardiandev.yak.events.YakEventListener;
 import org.guardiandev.yak.eviction.YakEvictionStrategy;
 import org.guardiandev.yak.serialization.YakValueSerializer;
@@ -67,7 +68,7 @@ public final class YakCache<T, Q> {
   public Q get(final T key) {
     LOG.trace("[name={},key={}] getting entry in cache", name, key);
 
-    final var storageIndex = keyToStorageIndex.getExistingOrAssign(key);
+    final var storageIndex = keyToStorageIndex.get(key);
 
     if (storageIndex == null) {
       LOG.trace("[name={},key={}] cache miss", name, key);
@@ -122,6 +123,23 @@ public final class YakCache<T, Q> {
     for (var i = 0; i < eventListeners.size(); i++) {
       eventListeners.get(i).accept(event, key, value);
     }
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    YakCache<?, ?> yakCache = (YakCache<?, ?>) o;
+    return name.equals(yakCache.name);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(name);
   }
 
   @Override

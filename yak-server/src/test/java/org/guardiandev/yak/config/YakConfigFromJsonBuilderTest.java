@@ -2,7 +2,6 @@ package org.guardiandev.yak.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -10,10 +9,21 @@ import org.junit.jupiter.api.Test;
 class YakConfigFromJsonBuilderTest {
 
   @Test
-  void shouldLoadGoodConfigSingleCache() throws IOException {
+  void shouldLoadGoodConfigSingleCache() {
     // Arrange
     final var expectedConfig = new YakServerConfig()
             .setPort(9000)
+            .setNetworkBufferPool(new YakMemoryPoolBufferConfig()
+                    .setPoolSize(50)
+                    .setFillOnCreation(true)
+                    .setBufferSize(1024))
+            .setHttpRequestMemoryPool(new YakMemoryPoolConfig()
+                    .setPoolSize(50)
+                    .setFillOnCreation(true))
+            .setIncomingCacheRequestPool(new YakMemoryPoolBufferConfig()
+                    .setPoolSize(50)
+                    .setFillOnCreation(true)
+                    .setBufferSize(256))
             .setCaches(List.of(new YakCacheConfig()
                     .setName("example1")
                     .setMaximumKeys(64)
@@ -33,7 +43,7 @@ class YakConfigFromJsonBuilderTest {
   }
 
   @Test
-  void shouldLoadConfigMissingValues() throws IOException {
+  void shouldLoadConfigMissingValues() {
     // Arrange
     final var expectedConfig = new YakServerConfig()
             .setCaches(List.of(new YakCacheConfig()));
@@ -50,7 +60,7 @@ class YakConfigFromJsonBuilderTest {
   }
 
   @Test
-  void shouldLoadConfigNoValuesPresent() throws IOException {
+  void shouldLoadConfigNoValuesPresent() {
     // Arrange
     final var expectedConfig = new YakServerConfig();
 

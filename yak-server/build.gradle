@@ -1,8 +1,10 @@
 plugins {
-    id 'me.champeau.jmh' version '0.6.2'
-    id 'yak.java-conventions'
+    id "me.champeau.jmh" version "0.6.2"
+    id "yak.java-conventions"
+    id "yak.java-integration-tests"
 }
 
 dependencies {
+    implementation project(":yak-core")
     implementation "com.fasterxml.jackson.core:jackson-databind:2.12.2"
 }

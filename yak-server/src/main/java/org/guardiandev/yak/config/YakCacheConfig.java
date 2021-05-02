@@ -1,6 +1,9 @@
 package org.guardiandev.yak.config;
 
-final class YakCacheConfig {
+/**
+ * Config POJO for a yak cache.
+ */
+public final class YakCacheConfig {
 
   private String name;
   private Integer maximumKeys;

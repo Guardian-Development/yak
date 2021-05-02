@@ -2,10 +2,16 @@ package org.guardiandev.yak.config;
 
 import java.util.List;
 
-final class YakServerConfig {
+/**
+ * Config POJO for a yak server config.
+ */
+public final class YakServerConfig {
 
   private Integer port;
   private List<YakCacheConfig> caches;
+  private YakMemoryPoolBufferConfig networkBufferPool;
+  private YakMemoryPoolConfig httpRequestMemoryPool;
+  private YakMemoryPoolBufferConfig incomingCacheRequestPool;
 
   public List<YakCacheConfig> getCaches() {
     return caches;
@@ -22,6 +28,33 @@ final class YakServerConfig {
 
   public YakServerConfig setPort(int port) {
     this.port = port;
+    return this;
+  }
+
+  public YakMemoryPoolBufferConfig getNetworkBufferPool() {
+    return networkBufferPool;
+  }
+
+  public YakServerConfig setNetworkBufferPool(YakMemoryPoolBufferConfig networkBufferPool) {
+    this.networkBufferPool = networkBufferPool;
+    return this;
+  }
+
+  public YakMemoryPoolConfig getHttpRequestMemoryPool() {
+    return httpRequestMemoryPool;
+  }
+
+  public YakServerConfig setHttpRequestMemoryPool(YakMemoryPoolConfig httpRequestMemoryPool) {
+    this.httpRequestMemoryPool = httpRequestMemoryPool;
+    return this;
+  }
+
+  public YakMemoryPoolBufferConfig getIncomingCacheRequestPool() {
+    return incomingCacheRequestPool;
+  }
+
+  public YakServerConfig setIncomingCacheRequestPool(YakMemoryPoolBufferConfig incomingCacheRequestPool) {
+    this.incomingCacheRequestPool = incomingCacheRequestPool;
     return this;
   }
 }
