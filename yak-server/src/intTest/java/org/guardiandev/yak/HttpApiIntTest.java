@@ -15,6 +15,7 @@ import org.guardiandev.yak.config.YakCacheConfig;
 import org.guardiandev.yak.config.YakMemoryPoolBufferConfig;
 import org.guardiandev.yak.config.YakMemoryPoolConfig;
 import org.guardiandev.yak.config.YakServerConfig;
+import org.guardiandev.yak.config.YakThreadIdleStrategy;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -38,6 +39,11 @@ final class HttpApiIntTest {
                     .setPoolSize(50)
                     .setFillOnCreation(true)
                     .setBufferSize(256))
+            .setThreadIdleStrategy(new YakThreadIdleStrategy()
+                    .setMaxSpins(10)
+                    .setMaxYields(10)
+                    .setMinParkPeriodNs(10)
+                    .setMaxParkPeriodNs(100))
             .setCaches(List.of(new YakCacheConfig()
                     .setName("intTest")
                     .setFixedValueSize(50)

@@ -5,7 +5,9 @@ import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 import org.agrona.LangUtil;
+import org.agrona.concurrent.IdleStrategy;
 import org.agrona.concurrent.OneToOneConcurrentArrayQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,16 +21,22 @@ public final class ResponderThread extends Thread {
 
   private final AtomicBoolean isRunning;
   private final OneToOneConcurrentArrayQueue<Responder> outgoingResponses;
+  private final IdleStrategy idleStrategy;
+  private final ResponderToSelectorRegistration registerConnectionWithSelector;
   private Selector respondingSelector;
 
   /**
    * Creates the responder thread.
+   *
+   * @param idleStrategy the strategy to use to limit the thread when there is no work to execute
    */
-  public ResponderThread() {
+  public ResponderThread(final IdleStrategy idleStrategy) {
     super("responder-thread");
+    this.idleStrategy = idleStrategy;
 
     this.isRunning = new AtomicBoolean(false);
     this.outgoingResponses = new OneToOneConcurrentArrayQueue<>(100);
+    this.registerConnectionWithSelector = new ResponderToSelectorRegistration();
   }
 
   /**
@@ -97,12 +105,13 @@ public final class ResponderThread extends Thread {
   @Override
   public void run() {
     while (isRunning.get()) {
-      tick();
+      idleStrategy.idle(tick());
     }
   }
 
-  private void tick() {
-    outgoingResponses.drain(this::registerConnectionWithSelector);
+  private int tick() {
+
+    outgoingResponses.drain(registerConnectionWithSelector);
 
     int numberAvailable = 0;
     try {
@@ -112,7 +121,7 @@ public final class ResponderThread extends Thread {
     }
 
     if (numberAvailable == 0) {
-      return;
+      return 0;
     }
 
     final var connectionsToProgress = respondingSelector.selectedKeys();
@@ -129,6 +138,8 @@ public final class ResponderThread extends Thread {
 
       connectionIterator.remove();
     }
+
+    return numberAvailable;
   }
 
   private void progressReadyConnection(final SelectionKey connection) throws IOException {
@@ -138,16 +149,6 @@ public final class ResponderThread extends Thread {
       if (complete) {
         closeConnection(connection);
       }
-    }
-  }
-
-  private void registerConnectionWithSelector(final Responder responder) {
-    try {
-      final var connection = responder.getSocket();
-      connection.register(respondingSelector, SelectionKey.OP_WRITE, responder);
-    } catch (ClosedChannelException e) {
-      LOG.trace("failed to register responder with selector", e);
-      closeConnection(responder);
     }
   }
 
@@ -170,6 +171,20 @@ public final class ResponderThread extends Thread {
       connection.channel().close();
     } catch (IOException ex) {
       LOG.trace("failed to close connection, abandoning", ex);
+    }
+  }
+
+  private final class ResponderToSelectorRegistration implements Consumer<Responder> {
+
+    @Override
+    public void accept(Responder responder) {
+      try {
+        final var connection = responder.getSocket();
+        connection.register(respondingSelector, SelectionKey.OP_WRITE, responder);
+      } catch (ClosedChannelException e) {
+        LOG.trace("failed to register responder with selector", e);
+        closeConnection(responder);
+      }
     }
   }
 }

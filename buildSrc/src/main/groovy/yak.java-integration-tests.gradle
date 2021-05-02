@@ -15,7 +15,6 @@ configurations {
 
 // run the intTest/** tests
 task intTest(type: Test) {
-    dependsOn test
     description = 'runs int tests'
     group = 'verification'
     testClassesDirs = sourceSets.intTest.output.classesDirs
@@ -23,8 +22,11 @@ task intTest(type: Test) {
 }
 
 intTest {
+    mustRunAfter test
     useJUnitPlatform()
     testLogging {
         events "started", "failed", "passed", "standard_out"
     }
 }
+
+check.dependsOn intTest

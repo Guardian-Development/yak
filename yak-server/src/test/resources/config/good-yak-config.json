@@ -14,6 +14,12 @@
     "fillOnCreation": true,
     "bufferSize": 256
   },
+  "threadIdleStrategy": {
+    "maxSpins": 10,
+    "maxYields" : 10,
+    "minParkPeriodNs": 10,
+    "maxParkPeriodNs" : 1000
+  },
   "caches": [
     {
       "name": "example1",
