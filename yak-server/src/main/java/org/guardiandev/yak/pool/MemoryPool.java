@@ -1,7 +1,6 @@
 package org.guardiandev.yak.pool;
 
 import java.util.function.Supplier;
-
 import org.agrona.concurrent.ManyToManyConcurrentArrayQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
