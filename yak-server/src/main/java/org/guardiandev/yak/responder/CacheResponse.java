@@ -16,10 +16,6 @@ public final class CacheResponse {
     return type;
   }
 
-  public String getKey() {
-    return key;
-  }
-
   public ByteBuffer getValue() {
     return value;
   }

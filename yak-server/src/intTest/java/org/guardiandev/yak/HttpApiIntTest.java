@@ -49,7 +49,10 @@ final class HttpApiIntTest {
     yakServer.init();
     yakServer.start();
 
-    await().atMost(Duration.ofSeconds(5)).until(() -> yakServer.isRunning());
+    await().atMost(Duration.ofSeconds(5))
+            .pollDelay(Duration.ofSeconds(1))
+            .pollInterval(Duration.ofSeconds(1))
+            .until(() -> yakServer.isRunning());
   }
 
   @AfterEach

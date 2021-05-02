@@ -1,7 +1,8 @@
 package org.guardiandev.yak.pool;
 
-import java.util.ArrayDeque;
 import java.util.function.Supplier;
+
+import org.agrona.concurrent.ManyToManyConcurrentArrayQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,7 +16,7 @@ public final class MemoryPool<T> {
   private static final Logger LOG = LoggerFactory.getLogger(MemoryPool.class);
 
   private final Supplier<T> factory;
-  private final ArrayDeque<T> pool;
+  private final ManyToManyConcurrentArrayQueue<T> pool;
 
   /**
    * Creates a memory pool of type T.
@@ -27,7 +28,7 @@ public final class MemoryPool<T> {
   public MemoryPool(final Supplier<T> factory, final int poolSize, final boolean fillOnCreation) {
 
     this.factory = factory;
-    this.pool = new ArrayDeque<>(poolSize);
+    this.pool = new ManyToManyConcurrentArrayQueue<>(poolSize);
 
     if (fillOnCreation) {
       for (var i = 0; i < poolSize; i++) {
@@ -44,7 +45,7 @@ public final class MemoryPool<T> {
   public T take() {
     final var pooledObject = pool.poll();
     if (pooledObject == null) {
-      LOG.warn("no available object in pool, creating new one");
+      LOG.debug("no available object in pool, creating new one");
       return factory.get();
     }
 
@@ -57,6 +58,9 @@ public final class MemoryPool<T> {
    * @param pooledObject the object to pool
    */
   public void returnToPool(final T pooledObject) {
-    pool.addLast(pooledObject);
+    final var returned = pool.offer(pooledObject);
+    if (!returned) {
+      LOG.debug("memory pool is full, discarding object");
+    }
   }
 }

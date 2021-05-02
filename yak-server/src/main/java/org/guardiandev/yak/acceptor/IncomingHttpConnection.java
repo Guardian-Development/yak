@@ -90,7 +90,7 @@ public final class IncomingHttpConnection implements IncomingConnection {
       }
     } else {
       // process any new bytes
-      var previousByte = 0x00;
+      var previousByte = readBuffer.position() > 0 ? readBuffer.get(readBuffer.position() - 1) : 0x00;
       while (readBuffer.position() < readPosition) {
         final var thisByte = readBuffer.get();
 
