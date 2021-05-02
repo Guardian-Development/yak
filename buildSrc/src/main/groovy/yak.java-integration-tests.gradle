@@ -22,9 +22,11 @@ task intTest(type: Test) {
 }
 
 intTest {
-    dependsOn test
+    mustRunAfter test
     useJUnitPlatform()
     testLogging {
         events "started", "failed", "passed", "standard_out"
     }
 }
+
+check.dependsOn intTest
