@@ -12,6 +12,7 @@ public final class YakServerConfig {
   private YakMemoryPoolBufferConfig networkBufferPool;
   private YakMemoryPoolConfig httpRequestMemoryPool;
   private YakMemoryPoolBufferConfig incomingCacheRequestPool;
+  private YakThreadIdleStrategy threadIdleStrategy;
 
   public List<YakCacheConfig> getCaches() {
     return caches;
@@ -55,6 +56,15 @@ public final class YakServerConfig {
 
   public YakServerConfig setIncomingCacheRequestPool(YakMemoryPoolBufferConfig incomingCacheRequestPool) {
     this.incomingCacheRequestPool = incomingCacheRequestPool;
+    return this;
+  }
+
+  public YakThreadIdleStrategy getThreadIdleStrategy() {
+    return threadIdleStrategy;
+  }
+
+  public YakServerConfig setThreadIdleStrategy(YakThreadIdleStrategy threadIdleStrategy) {
+    this.threadIdleStrategy = threadIdleStrategy;
     return this;
   }
 }

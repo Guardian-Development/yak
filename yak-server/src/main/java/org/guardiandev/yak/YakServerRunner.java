@@ -1,6 +1,7 @@
 package org.guardiandev.yak;
 
 import java.nio.file.Path;
+import org.agrona.concurrent.BackoffIdleStrategy;
 import org.guardiandev.yak.acceptor.ConnectionAcceptorThread;
 import org.guardiandev.yak.acceptor.IncomingConnectionFactory;
 import org.guardiandev.yak.cacheprogression.CacheInitializer;
@@ -50,7 +51,13 @@ public final class YakServerRunner {
             config.getIncomingCacheRequestPool().getBufferSize(),
             config.getIncomingCacheRequestPool().isFillOnCreation());
 
-    responderThread = new ResponderThread();
+    final var threadIdleStrategy = new BackoffIdleStrategy(
+            config.getThreadIdleStrategy().getMaxSpins(),
+            config.getThreadIdleStrategy().getMaxYields(),
+            config.getThreadIdleStrategy().getMinParkPeriodNs(),
+            config.getThreadIdleStrategy().getMaxParkPeriodNs());
+
+    responderThread = new ResponderThread(threadIdleStrategy);
 
     final var cacheResponseBridge = new CacheResponseToResponderBridge(responderThread);
     final var cacheInit = new CacheInitializer(config.getCaches());
@@ -59,8 +66,8 @@ public final class YakServerRunner {
     final var connectionFactory = new IncomingConnectionFactory(networkBufferPool, httpRequestMemoryPool, incomingCacheRequestMemoryPool);
     final var connectionCacheBridge = new IncomingConnectionToCacheWrapperBridge(cacheNameToCache);
 
-    acceptorThread = new ConnectionAcceptorThread(config.getPort(), connectionFactory, connectionCacheBridge);
-    cacheProgressionThread = new CacheProgressionThread(cacheNameToCache.values());
+    acceptorThread = new ConnectionAcceptorThread(config.getPort(), connectionFactory, connectionCacheBridge, threadIdleStrategy);
+    cacheProgressionThread = new CacheProgressionThread(cacheNameToCache.values(), threadIdleStrategy);
 
     return true;
   }

@@ -1,6 +1,7 @@
 package org.guardiandev.yak.cacheprogression;
 
 import java.nio.ByteBuffer;
+import java.util.function.Consumer;
 import org.agrona.concurrent.OneToOneConcurrentArrayQueue;
 import org.guardiandev.yak.YakCache;
 import org.guardiandev.yak.acceptor.IncomingCacheRequest;
@@ -20,7 +21,7 @@ public final class CacheWrapper {
   private final CacheResponseToResponderBridge responderBridge;
   private final MemoryPool<IncomingCacheRequest> incomingCacheRequestPool;
   private final OneToOneConcurrentArrayQueue<IncomingCacheRequest> incomingCacheRequests;
-  private final CacheResponse cacheResponse;
+  private final CacheRequestExecutor cacheRequestExecutor;
 
   /**
    * Initialise the cache wrapper for the given cache.
@@ -37,7 +38,7 @@ public final class CacheWrapper {
     this.responderBridge = responderBridge;
     this.incomingCacheRequestPool = incomingCacheRequestPool;
     this.incomingCacheRequests = new OneToOneConcurrentArrayQueue<>(100);
-    this.cacheResponse = new CacheResponse();
+    this.cacheRequestExecutor = new CacheRequestExecutor();
   }
 
   /**
@@ -53,47 +54,59 @@ public final class CacheWrapper {
 
   /**
    * Progress all waiting requests, this essentially ticks the wrapper.
+   *
+   * @return the number of requests progressed
    */
-  public void progressIncomingRequests() {
-    incomingCacheRequests.drain(this::progressIncomingRequest);
+  public int progressIncomingRequests() {
+
+    return incomingCacheRequests.drain(cacheRequestExecutor);
   }
 
-  private void progressIncomingRequest(final IncomingCacheRequest request) {
+  private final class CacheRequestExecutor implements Consumer<IncomingCacheRequest> {
 
-    cacheResponse.reset();
+    private final CacheResponse cacheResponse;
 
-    // cache null means this is a responder for all non existing caches
-    if (cache == null) {
-      cacheResponse.asCacheNotFound(request.getResponder());
-    } else {
+    CacheRequestExecutor() {
+      this.cacheResponse = new CacheResponse();
+    }
 
-      switch (request.getType()) {
-        case GET:
-          processGetRequest(request);
-          break;
-        case CREATE:
-          processCreateRequest(request);
-          break;
-        default:
+    @Override
+    public void accept(IncomingCacheRequest request) {
+      cacheResponse.reset();
+
+      // cache null means this is a responder for all non existing caches
+      if (cache == null) {
+        cacheResponse.asCacheNotFound(request.getResponder());
+      } else {
+
+        switch (request.getType()) {
+          case GET:
+            processGetRequest(request);
+            break;
+          case CREATE:
+            processCreateRequest(request);
+            break;
+          default:
+        }
+      }
+
+      responderBridge.acceptCacheResponse(cacheResponse);
+      incomingCacheRequestPool.returnToPool(request);
+    }
+
+    private void processGetRequest(final IncomingCacheRequest request) {
+      final var result = cache.get(request.getKeyName());
+
+      if (result == null) {
+        cacheResponse.asKeyNotFound(request.getKeyName(), request.getResponder());
+      } else {
+        cacheResponse.asFound(request.getKeyName(), result, request.getResponder());
       }
     }
 
-    responderBridge.acceptCacheResponse(cacheResponse);
-    incomingCacheRequestPool.returnToPool(request);
-  }
-
-  private void processGetRequest(final IncomingCacheRequest request) {
-    final var result = cache.get(request.getKeyName());
-
-    if (result == null) {
-      cacheResponse.asKeyNotFound(request.getKeyName(), request.getResponder());
-    } else {
-      cacheResponse.asFound(request.getKeyName(), result, request.getResponder());
+    private void processCreateRequest(final IncomingCacheRequest request) {
+      cache.put(request.getKeyName(), request.getContent());
+      cacheResponse.asCreated(request.getKeyName(), request.getResponder());
     }
-  }
-
-  private void processCreateRequest(final IncomingCacheRequest request) {
-    cache.put(request.getKeyName(), request.getContent());
-    cacheResponse.asCreated(request.getKeyName(), request.getResponder());
   }
 }

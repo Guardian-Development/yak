@@ -118,9 +118,9 @@ public final class IncomingHttpConnection implements IncomingConnection {
               processedCommittedPosition = headersEndPosition;
             }
           }
-        } else {
-          previousByte = thisByte;
         }
+
+        previousByte = thisByte;
       }
     }
 

@@ -7,6 +7,7 @@ import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.agrona.LangUtil;
+import org.agrona.concurrent.IdleStrategy;
 import org.guardiandev.yak.cacheprogression.IncomingConnectionToCacheWrapperBridge;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,6 +22,7 @@ public final class ConnectionAcceptorThread extends Thread {
   private final int port;
   private final IncomingConnectionFactory connectionFactory;
   private final IncomingConnectionToCacheWrapperBridge cacheWrapperBridge;
+  private final IdleStrategy idleStrategy;
   private final AtomicBoolean isRunning;
 
   private ServerSocketChannel serverSocketChannel;
@@ -32,15 +34,18 @@ public final class ConnectionAcceptorThread extends Thread {
    * @param port               the port to listen for connections on
    * @param connectionFactory  the factory to use when wrapping a new accepted connection
    * @param cacheWrapperBridge the bridge to send incoming requests once read off the wire
+   * @param idleStrategy       the strategy to use to limit the thread when there is no work to execute
    */
   public ConnectionAcceptorThread(final int port,
                                   final IncomingConnectionFactory connectionFactory,
-                                  final IncomingConnectionToCacheWrapperBridge cacheWrapperBridge) {
+                                  final IncomingConnectionToCacheWrapperBridge cacheWrapperBridge,
+                                  final IdleStrategy idleStrategy) {
     super("connection-acceptor-thread");
 
     this.port = port;
     this.connectionFactory = connectionFactory;
     this.cacheWrapperBridge = cacheWrapperBridge;
+    this.idleStrategy = idleStrategy;
     this.isRunning = new AtomicBoolean(false);
   }
 
@@ -107,14 +112,14 @@ public final class ConnectionAcceptorThread extends Thread {
   @Override
   public void run() {
     while (isRunning.get()) {
-      tick();
+      idleStrategy.idle(tick());
     }
   }
 
   /**
    * Perform a single iteration of the thread, accepting and progressing any ready connections.
    */
-  private void tick() {
+  private int tick() {
     int numberAvailable = 0;
     try {
       numberAvailable = acceptingSelector.selectNow();
@@ -123,7 +128,7 @@ public final class ConnectionAcceptorThread extends Thread {
     }
 
     if (numberAvailable == 0) {
-      return;
+      return 0;
     }
 
     final var connectionsToProgress = acceptingSelector.selectedKeys();
@@ -140,6 +145,8 @@ public final class ConnectionAcceptorThread extends Thread {
 
       connectionIterator.remove();
     }
+
+    return numberAvailable;
   }
 
   private void progressReadyConnection(final SelectionKey connection) throws IOException {
