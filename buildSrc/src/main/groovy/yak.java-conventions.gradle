@@ -88,9 +88,7 @@ test {
     useJUnitPlatform()
     maxParallelForks = Runtime.runtime.availableProcessors().intdiv(2) ?: 1
     testLogging {
-        afterTest { desc, result ->
-            logger.quiet "Test ${desc.name} [${desc.className}] with result: ${result.resultType}"
-        }
+        events "failed", "passed"
     }
 }
 

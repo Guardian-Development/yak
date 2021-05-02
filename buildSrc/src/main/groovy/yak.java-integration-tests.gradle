@@ -24,8 +24,6 @@ task intTest(type: Test) {
 intTest {
     useJUnitPlatform()
     testLogging {
-        afterTest { desc, result ->
-            logger.quiet "Test ${desc.name} [${desc.className}] with result: ${result.resultType}"
-        }
+        events "started", "failed", "passed", "standard_out"
     }
 }
