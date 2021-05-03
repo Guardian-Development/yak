@@ -257,11 +257,11 @@ public final class IncomingHttpConnection implements IncomingConnection {
   }
 
   private IncomingCacheRequestType typeFromMethod(final String httpMethod) {
-    if ("GET".equalsIgnoreCase(httpMethod)) {
+    if (Constants.HTTP_GET_METHOD.equalsIgnoreCase(httpMethod)) {
       return IncomingCacheRequestType.GET;
     }
 
-    if ("POST".equalsIgnoreCase(httpMethod)) {
+    if (Constants.HTTP_POST_METHOD.equalsIgnoreCase(httpMethod)) {
       return IncomingCacheRequestType.CREATE;
     }
 

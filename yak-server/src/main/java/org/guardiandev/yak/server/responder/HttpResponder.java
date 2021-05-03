@@ -65,15 +65,20 @@ public final class HttpResponder implements Responder {
   }
 
   private void buildHeaders(final ByteBuffer body) {
-    if (body == null || !body.hasRemaining()) {
-      return;
+    if (body != null && body.hasRemaining()) {
+      // content length header
+      writeBuffer.put(Constants.CONTENT_LENGTH_BYTES);
+      writeBuffer.put(Constants.COLON_BYTE);
+      writeBuffer.put(Constants.SPACE_BYTE);
+      writeBuffer.put(String.valueOf(body.remaining()).getBytes());
+      writeBuffer.put(Constants.CRLF_SEQUENCE_BYTES);
     }
 
-    // content length header
-    writeBuffer.put(Constants.CONTENT_LENGTH_BYTES);
+    // request id header returned to user on all requests
+    writeBuffer.put(Constants.HTTP_REQUEST_ID_HEADER_BYTES);
     writeBuffer.put(Constants.COLON_BYTE);
     writeBuffer.put(Constants.SPACE_BYTE);
-    writeBuffer.put(String.valueOf(body.remaining()).getBytes());
+    writeBuffer.put(requestId.getBytes());
     writeBuffer.put(Constants.CRLF_SEQUENCE_BYTES);
   }
 
