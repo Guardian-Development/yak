@@ -55,7 +55,7 @@ public final class YakCache<T, Q> {
     this.evictionStrategy = evictionStrategy;
     this.eventListeners = eventListeners;
 
-    LOG.debug("[name={}] cache created with maximum keys {}, eviction strategy {}, and storage {}",
+    LOG.debug("[cacheName={}] cache created with maximum keys {}, eviction strategy {}, and storage {}",
             name, maximumKeys, evictionStrategy, storage);
   }
 
@@ -66,12 +66,12 @@ public final class YakCache<T, Q> {
    * @return the value associated with the key, or null if not found.
    */
   public Q get(final T key) {
-    LOG.trace("[name={},key={}] getting entry in cache", name, key);
+    LOG.trace("[cacheName={},key={}] getting entry in cache", name, key);
 
     final var storageIndex = keyToStorageIndex.get(key);
 
     if (storageIndex == null) {
-      LOG.trace("[name={},key={}] cache miss", name, key);
+      LOG.trace("[cacheName={},key={}] cache miss", name, key);
       broadcastEvent(GET_CACHE_MISS, key, null);
       return null;
     }
@@ -81,7 +81,7 @@ public final class YakCache<T, Q> {
 
     broadcastEvent(GET_CACHE_HIT, key, value);
 
-    LOG.trace("[name={},key={}] cache hit, returning deserialized value {}", name, key, value);
+    LOG.trace("[cacheName={},key={}] cache hit, returning deserialized value {}", name, key, value);
 
     return value;
   }
@@ -94,22 +94,22 @@ public final class YakCache<T, Q> {
    * @return true if successfully stored, else false.
    */
   public boolean put(final T key, final Q value) {
-    LOG.trace("[name={},key={}] putting entry in cache", name, key);
+    LOG.trace("[cacheName={},key={}] putting entry in cache", name, key);
 
     var storageIndex = keyToStorageIndex.getExistingOrAssign(key);
     if (storageIndex == null) {
-      LOG.trace("[name={},key={}] cache full, triggering eviction", name, key);
+      LOG.trace("[cacheName={},key={}] cache full, triggering eviction", name, key);
       final var evictedKey = evictionStrategy.keyToEvict();
       keyToStorageIndex.delete(evictedKey);
 
-      LOG.trace("[name={},key={}] evicting key {}", name, key, evictedKey);
+      LOG.trace("[cacheName={},key={}] evicting key {}", name, key, evictedKey);
       storageIndex = keyToStorageIndex.getExistingOrAssign(key);
     }
 
     final var storageValue = storage.getStorage(storageIndex);
     valueSerializer.serialize(value, storageValue);
 
-    LOG.trace("[name={},key={}] entry added to cache", name, key);
+    LOG.trace("[cacheName={},key={}] entry added to cache", name, key);
     broadcastEvent(PUT, key, value);
 
     return true;

@@ -44,7 +44,7 @@ public final class OpenAddressingHashMap<K> {
 
     this.name = String.format("storage-%s", UUID.randomUUID().toString().substring(0, 5));
 
-    LOG.debug("[{}] hash map created with fixed size {}", name, fixedSize);
+    LOG.debug("[storageName={}] hash map created with fixed size {}", name, fixedSize);
   }
 
   /**
@@ -54,10 +54,10 @@ public final class OpenAddressingHashMap<K> {
    * @return the location of the key if it exists, else null
    */
   public Integer get(final K key) {
-    LOG.trace("[name={},key={}] getting position for key", name, key);
+    LOG.trace("[storageName={},key={}] getting position for key", name, key);
 
     if (key == null) {
-      LOG.trace("[name={},key={}] null key not stored, returning null", name, key);
+      LOG.trace("[storageName={},key={}] null key not stored, returning null", name, key);
       return null;
     }
 
@@ -67,12 +67,12 @@ public final class OpenAddressingHashMap<K> {
 
     // if location is empty, return null
     if (currentEntryAtPosition == null) {
-      LOG.trace("[name={},key={}] key does not exist", name, key);
+      LOG.trace("[storageName={},key={}] key does not exist", name, key);
       return null;
     }
 
     if (currentEntryAtPosition.equals(key)) {
-      LOG.trace("[name={},key={}] key does exist as position {}", name, key, position);
+      LOG.trace("[storageName={},key={}] key does exist as position {}", name, key, position);
       return position;
     }
 
@@ -80,31 +80,31 @@ public final class OpenAddressingHashMap<K> {
     final var searchIncrement = 1 + (hash % mprime);
     var searchingPosition = (position + searchIncrement) % keySpace;
 
-    LOG.trace("[name={},key={}] initial position {} not equal to key, searching for key with increment {}", name, key, position, searchIncrement);
+    LOG.trace("[storageName={},key={}] initial position {} not equal to key, searching for key with increment {}", name, key, position, searchIncrement);
 
     while (searchingPosition != position) {
       final var searchingEntry = keys[searchingPosition];
 
-      LOG.trace("[name={},key={}] searching position {}", name, key, searchingPosition);
+      LOG.trace("[storageName={},key={}] searching position {}", name, key, searchingPosition);
 
       // if empty, key cant be present already, assign to this slot
       if (searchingEntry == null) {
-        LOG.trace("[name={},key={}] key does exist as position {}", name, key, searchingPosition);
+        LOG.trace("[storageName={},key={}] key does exist as position {}", name, key, searchingPosition);
         return null;
       }
 
       // if equal, found key, return position
       if (searchingEntry.equals(key)) {
-        LOG.trace("[name={},key={}] key does exist as position {}", name, key, searchingPosition);
+        LOG.trace("[storageName={},key={}] key does exist as position {}", name, key, searchingPosition);
         return searchingPosition;
       }
 
       // not found, but not hit exit condition, continue searching
       searchingPosition = (searchingPosition + searchIncrement) % keySpace;
-      LOG.trace("[name={},key={}] stopping condition not met, continuing search", name, key);
+      LOG.trace("[storageName={},key={}] stopping condition not met, continuing search", name, key);
     }
 
-    LOG.trace("[name={},key={}] key does not exist", name, key);
+    LOG.trace("[storageName={},key={}] key does not exist", name, key);
     return null;
   }
 
@@ -132,10 +132,10 @@ public final class OpenAddressingHashMap<K> {
    * @return the assignment, or null if the {@link #keys} is full and the key does not currently exist
    */
   public Integer getExistingOrAssign(final K key) {
-    LOG.trace("[name={},key={}] getting position for key", name, key);
+    LOG.trace("[storageName={},key={}] getting position for key", name, key);
 
     if (key == null) {
-      LOG.trace("[name={},key={}] null key not stored, returning null", name, key);
+      LOG.trace("[storageName={},key={}] null key not stored, returning null", name, key);
       return null;
     }
 
@@ -146,7 +146,7 @@ public final class OpenAddressingHashMap<K> {
 
     // if location is empty, or key present is equal to param, return position of the key
     if (currentEntryAtPosition == null || currentEntryAtPosition.equals(key)) {
-      LOG.trace("[name={},key={}] initial position empty or equal to key, assigning position {} to key", name, key, position);
+      LOG.trace("[storageName={},key={}] initial position empty or equal to key, assigning position {} to key", name, key, position);
       keys[position] = key;
       return position;
     }
@@ -156,16 +156,16 @@ public final class OpenAddressingHashMap<K> {
     var searchingPosition = (position + searchIncrement) % keySpace;
     var nextViableInsertLocation = -1;
 
-    LOG.trace("[name={},key={}] initial position {} not equal to key, searching for key with increment {}", name, key, position, searchIncrement);
+    LOG.trace("[storageName={},key={}] initial position {} not equal to key, searching for key with increment {}", name, key, position, searchIncrement);
 
     while (searchingPosition != position) {
       final var searchingEntry = keys[searchingPosition];
 
-      LOG.trace("[name={},key={}] searching position {}", name, key, searchingPosition);
+      LOG.trace("[storageName={},key={}] searching position {}", name, key, searchingPosition);
 
       // if empty, key cant be present already, assign to this slot
       if (searchingEntry == null) {
-        LOG.trace("[name={},key={}] position {} empty, assigning position to key", name, key, searchingPosition);
+        LOG.trace("[storageName={},key={}] position {} empty, assigning position to key", name, key, searchingPosition);
         keys[searchingPosition] = key;
         return searchingPosition;
       }
@@ -177,7 +177,7 @@ public final class OpenAddressingHashMap<K> {
 
       // if equal, found key, return position
       if (searchingEntry.equals(key)) {
-        LOG.trace("[name={},key={}] position {} contains existing key of same value, assigning position to key", name, key, searchingPosition);
+        LOG.trace("[storageName={},key={}] position {} contains existing key of same value, assigning position to key", name, key, searchingPosition);
 
         keys[searchingPosition] = key;
         return searchingPosition;
@@ -185,25 +185,25 @@ public final class OpenAddressingHashMap<K> {
 
       // not found, but not hit exit condition, continue searching
       searchingPosition = (searchingPosition + searchIncrement) % keySpace;
-      LOG.trace("[name={},key={}] stopping condition not met, continuing search", name, key);
+      LOG.trace("[storageName={},key={}] stopping condition not met, continuing search", name, key);
     }
 
     // key does not exist in set, if current position is marked as deleted, use current position
     if (DELETED.equals(currentEntryAtPosition)) {
-      LOG.trace("[name={},key={}] key did not exists in set, current position {} deleted, assigning key", name, key, position);
+      LOG.trace("[storageName={},key={}] key did not exists in set, current position {} deleted, assigning key", name, key, position);
       keys[position] = key;
       return position;
     }
 
     // key not found, or an empty space to insert key, insert at next viable location or fail
     if (nextViableInsertLocation == -1) {
-      LOG.trace("[name={},key={}] key not found and no deleted entries in set, hash map is full", name, key);
+      LOG.trace("[storageName={},key={}] key not found and no deleted entries in set, hash map is full", name, key);
       return null;
     }
 
     keys[nextViableInsertLocation] = key;
 
-    LOG.trace("[name={},key={}] position {} contained deleted entry, assigning position to key", name, key, nextViableInsertLocation);
+    LOG.trace("[storageName={},key={}] position {} contained deleted entry, assigning position to key", name, key, nextViableInsertLocation);
 
     return nextViableInsertLocation;
   }
@@ -229,10 +229,10 @@ public final class OpenAddressingHashMap<K> {
    * @return true if the key is no longer present in the hash map.
    */
   public boolean delete(final K key) {
-    LOG.trace("[name={},key={}] deleting key", name, key);
+    LOG.trace("[storageName={},key={}] deleting key", name, key);
 
     if (key == null) {
-      LOG.trace("[name={},key={}] null key not stored, returning false", name, key);
+      LOG.trace("[storageName={},key={}] null key not stored, returning false", name, key);
       return false;
     }
 
@@ -243,13 +243,13 @@ public final class OpenAddressingHashMap<K> {
 
     // if location is empty, key cant be present
     if (currentEntryAtPosition == null) {
-      LOG.trace("[name={},key={}] initial position {} empty, key does not exist in set", name, key, position);
+      LOG.trace("[storageName={},key={}] initial position {} empty, key does not exist in set", name, key, position);
       return true;
     }
 
     // if key is present at location, mark as deleted
     if (currentEntryAtPosition.equals(key)) {
-      LOG.trace("[name={},key={}] initial position {} equal to key, marking position as deleted", name, key, position);
+      LOG.trace("[storageName={},key={}] initial position {} equal to key, marking position as deleted", name, key, position);
       keys[position] = DELETED;
       return true;
     }
@@ -257,32 +257,32 @@ public final class OpenAddressingHashMap<K> {
     final var searchIncrement = 1 + (hash % mprime);
     var searchingPosition = (position + searchIncrement) % keySpace;
 
-    LOG.trace("[name={},key={}] initial position {} not equal to key, searching for key with increment {}", name, key, position, searchIncrement);
+    LOG.trace("[storageName={},key={}] initial position {} not equal to key, searching for key with increment {}", name, key, position, searchIncrement);
 
     while (searchingPosition != position) {
       final var searchingEntry = keys[searchingPosition];
 
-      LOG.trace("[name={},key={}] searching position {}", name, key, searchingPosition);
+      LOG.trace("[storageName={},key={}] searching position {}", name, key, searchingPosition);
 
       // if empty, key cant be present
       if (searchingEntry == null) {
-        LOG.trace("[name={},key={}] position {} is empty, key does not exist in set", name, key, searchingPosition);
+        LOG.trace("[storageName={},key={}] position {} is empty, key does not exist in set", name, key, searchingPosition);
         return true;
       }
 
       // if equal, found key, delete it
       if (searchingEntry.equals(key)) {
-        LOG.trace("[name={},key={}] position {} equal to key, marking position as deleted", name, key, searchingPosition);
+        LOG.trace("[storageName={},key={}] position {} equal to key, marking position as deleted", name, key, searchingPosition);
         keys[searchingPosition] = DELETED;
         return true;
       }
 
       // not found, but not hit exit condition, continue searching
       searchingPosition = (searchingPosition + searchIncrement) % keySpace;
-      LOG.trace("[name={},key={}] stopping condition not met, continuing search", name, key);
+      LOG.trace("[storageName={},key={}] stopping condition not met, continuing search", name, key);
     }
 
-    LOG.trace("[name={},key={}] key not found in set", name, key);
+    LOG.trace("[storageName={},key={}] key not found in set", name, key);
 
     return true;
   }
