@@ -1,5 +1,6 @@
 package org.guardiandev.yak.acceptor;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import org.guardiandev.yak.pool.MemoryPool;
@@ -34,9 +35,10 @@ public final class IncomingConnectionFactory {
    *
    * @param rawConnection the raw tcp connection
    * @return a wrapped connection that handles the expected protocol and reads the request off the wire
+   * @throws IOException if unable to get the remote address for correlation logging
    */
-  public IncomingConnection wrapConnection(final SocketChannel rawConnection) {
+  public IncomingConnection wrapConnection(final SocketChannel rawConnection) throws IOException {
     return new IncomingHttpConnection(
-            rawConnection, networkBufferPool, httpRequestMemoryPool, incomingCacheRequestMemoryPool);
+            rawConnection, networkBufferPool, httpRequestMemoryPool, incomingCacheRequestMemoryPool, rawConnection.getRemoteAddress().toString());
   }
 }

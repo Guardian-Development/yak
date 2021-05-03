@@ -12,6 +12,7 @@ public final class IncomingCacheRequest {
   private String cacheName;
   private String keyName;
   private Responder responder;
+  private String requestId;
 
   private final ByteBuffer content;
 
@@ -74,6 +75,15 @@ public final class IncomingCacheRequest {
     return this;
   }
 
+  public String getRequestId() {
+    return requestId;
+  }
+
+  public IncomingCacheRequest setRequestId(String requestId) {
+    this.requestId = requestId;
+    return this;
+  }
+
   /**
    * Reset the object ready for it to be used again in a pool.
    *
@@ -84,8 +94,19 @@ public final class IncomingCacheRequest {
     this.cacheName = null;
     this.keyName = null;
     this.responder = null;
+    this.requestId = null;
     this.content.clear();
 
     return this;
+  }
+
+  @Override
+  public String toString() {
+    return "IncomingCacheRequest{"
+            + "type=" + type
+            + ", cacheName='" + cacheName + '\''
+            + ", keyName='" + keyName + '\''
+            + ", requestId='" + requestId + '\''
+            + '}';
   }
 }

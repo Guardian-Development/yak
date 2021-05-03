@@ -21,4 +21,5 @@ public final class Constants {
   public static final byte[] CRLF_SEQUENCE_BYTES = CRLF_SEQUENCE.getBytes();
   public static final String CONTENT_LENGTH = "Content-Length";
   public static final byte[] CONTENT_LENGTH_BYTES = CONTENT_LENGTH.getBytes();
+  public static final String HTTP_REQUEST_ID_HEADER = "x-request-id";
 }

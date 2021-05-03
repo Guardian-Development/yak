@@ -85,4 +85,14 @@ public final class HttpRequest {
     this.bodyStartIndex = 0;
     return this;
   }
+
+  @Override
+  public String toString() {
+    return "HttpRequest{"
+            + "method='" + method + '\''
+            + ", requestUri='" + requestUri + '\''
+            + ", httpVersion='" + httpVersion + '\''
+            + ", headers=" + headers
+            + '}';
+  }
 }

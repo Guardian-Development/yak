@@ -3,14 +3,19 @@ package org.guardiandev.yak.acceptor;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
+import java.util.UUID;
 import org.guardiandev.yak.http.Constants;
 import org.guardiandev.yak.pool.MemoryPool;
 import org.guardiandev.yak.responder.HttpResponder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Provides the http protocol over a tcp socket, reading an incoming request.
  */
 public final class IncomingHttpConnection implements IncomingConnection {
+
+  private static final Logger LOG = LoggerFactory.getLogger(IncomingHttpConnection.class);
 
   private enum ProcessingStage {
     REQUEST_URI,
@@ -24,6 +29,7 @@ public final class IncomingHttpConnection implements IncomingConnection {
   private final ByteBuffer readBuffer;
   private final HttpRequest request;
   private final MemoryPool<IncomingCacheRequest> incomingCacheRequestMemoryPool;
+  private final String correlationId;
 
   private boolean isComplete;
   private boolean hasError;
@@ -39,16 +45,19 @@ public final class IncomingHttpConnection implements IncomingConnection {
    * @param networkBufferPool              the pool to take a network byte buffer from
    * @param httpRequestMemoryPool          the pool to take a http request from
    * @param incomingCacheRequestMemoryPool the pool to take an incoming cache request from
+   * @param correlationId                  this is used for log correlation
    */
   public IncomingHttpConnection(final SocketChannel rawConnection,
                                 final MemoryPool<ByteBuffer> networkBufferPool,
                                 final MemoryPool<HttpRequest> httpRequestMemoryPool,
-                                final MemoryPool<IncomingCacheRequest> incomingCacheRequestMemoryPool) {
+                                final MemoryPool<IncomingCacheRequest> incomingCacheRequestMemoryPool,
+                                final String correlationId) {
     this.rawConnection = rawConnection;
     this.networkBufferPool = networkBufferPool;
     this.httpRequestMemoryPool = httpRequestMemoryPool;
     this.request = httpRequestMemoryPool.take();
     this.incomingCacheRequestMemoryPool = incomingCacheRequestMemoryPool;
+    this.correlationId = correlationId;
     this.isComplete = false;
     this.readBuffer = networkBufferPool.take();
     this.stage = ProcessingStage.REQUEST_URI;
@@ -65,11 +74,11 @@ public final class IncomingHttpConnection implements IncomingConnection {
   @Override
   public boolean progress() throws IOException {
 
-    final var bytesRead = rawConnection.read(readBuffer);
-
-    if (bytesRead == 0) {
-      return false;
+    if (isComplete) {
+      return true;
     }
+
+    final var bytesRead = rawConnection.read(readBuffer);
 
     if (bytesRead == -1) {
       hasError = true;
@@ -80,15 +89,7 @@ public final class IncomingHttpConnection implements IncomingConnection {
     final var readPosition = readBuffer.position();
     readBuffer.position(processedPosition);
 
-    if (stage == ProcessingStage.MESSAGE_BODY) {
-      final var bodySizeBuffered = readPosition - processedCommittedPosition;
-      final var messageBodyLength = extractMessageBodyLength();
-      if (bodySizeBuffered >= messageBodyLength) {
-        extractMessageBody(processedCommittedPosition, messageBodyLength);
-        isComplete = true;
-        return true;
-      }
-    } else {
+    if (stage == ProcessingStage.REQUEST_URI || stage == ProcessingStage.HEADERS) {
       // process any new bytes
       var previousByte = readBuffer.position() > 0 ? readBuffer.get(readBuffer.position() - 1) : 0x00;
       while (readBuffer.position() < readPosition) {
@@ -101,26 +102,50 @@ public final class IncomingHttpConnection implements IncomingConnection {
             readBuffer.position(requestUriEndPosition);
             stage = ProcessingStage.HEADERS;
             processedCommittedPosition = requestUriEndPosition;
+
+            LOG.trace("[correlationId={}][request={}] request uri extracted", correlationId, request);
+
           } else if (stage == ProcessingStage.HEADERS) {
+
             final var headersEndPosition = readBuffer.position();
             if (headersComplete(processedCommittedPosition, headersEndPosition - 2)) {
               stage = ProcessingStage.MESSAGE_BODY;
               readBuffer.position(headersEndPosition);
               processedCommittedPosition = headersEndPosition;
+
+              LOG.trace("[correlationId={}][request={}] all headers exrtracted", correlationId, request);
+
               final var bodyLength = extractMessageBodyLength();
               if (bodyLength == 0) {
+                LOG.debug("[correlationId={}][request={}] completed processing incoming request", correlationId, request);
                 isComplete = true;
                 return true;
               }
+
             } else {
               extractHeader(processedCommittedPosition, headersEndPosition - 2);
               readBuffer.position(headersEndPosition);
               processedCommittedPosition = headersEndPosition;
+
+              LOG.trace("[correlationId={}][request={}] header extracted", correlationId, request);
             }
           }
         }
 
         previousByte = thisByte;
+      }
+    }
+
+    if (stage == ProcessingStage.MESSAGE_BODY) {
+      final var bodySizeBuffered = readPosition - processedCommittedPosition;
+      final var messageBodyLength = extractMessageBodyLength();
+      if (bodySizeBuffered >= messageBodyLength) {
+        extractMessageBody(processedCommittedPosition, messageBodyLength);
+
+        LOG.debug("[correlationId={}][request={}] completed processing incoming request", correlationId, request);
+
+        isComplete = true;
+        return true;
       }
     }
 
@@ -201,15 +226,23 @@ public final class IncomingHttpConnection implements IncomingConnection {
     readBuffer.position(request.getBodyStartIndex());
     readBuffer.limit(readBuffer.position() + request.getBodyLength());
 
-    final var request = incomingCacheRequestMemoryPool.take();
-    request.reset();
+    final var cacheRequest = incomingCacheRequestMemoryPool.take();
+    cacheRequest.reset();
 
-    return request
-            .setResponder(new HttpResponder(rawConnection, networkBufferPool))
+    cacheRequest.setResponder(new HttpResponder(rawConnection, networkBufferPool))
             .setCacheName(cache)
             .setKeyName(key)
             .setType(type)
             .setContent(readBuffer);
+
+    var requestId = request.getHeaderOrNull(Constants.HTTP_REQUEST_ID_HEADER);
+    requestId = requestId == null ? UUID.randomUUID().toString() : requestId;
+
+    cacheRequest.setRequestId(requestId);
+
+    LOG.debug("[correlationId={}, requestId={}][{}] returning cache request", correlationId, requestId, cacheRequest);
+
+    return cacheRequest;
   }
 
   /**
