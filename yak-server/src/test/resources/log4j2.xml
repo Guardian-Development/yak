@@ -6,6 +6,9 @@
         </Console>
     </Appenders>
     <Loggers>
+        <Logger name="org.guardiandev.yak.server" level="TRACE" additivity="false">
+            <AppenderRef ref="Console"/>
+        </Logger>
         <Root level="DEBUG">
             <AppenderRef ref="Console"/>
         </Root>
