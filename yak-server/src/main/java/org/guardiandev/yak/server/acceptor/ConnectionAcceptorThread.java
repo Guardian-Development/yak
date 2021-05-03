@@ -2,6 +2,7 @@ package org.guardiandev.yak.server.acceptor;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
@@ -27,6 +28,7 @@ public final class ConnectionAcceptorThread extends Thread {
 
   private ServerSocketChannel serverSocketChannel;
   private Selector acceptingSelector;
+  private InetSocketAddress listeningOnAddress;
 
   /**
    * Initialise the connection acceptor thread.
@@ -54,7 +56,7 @@ public final class ConnectionAcceptorThread extends Thread {
    */
   @Override
   public synchronized void start() {
-    LOG.debug("starting connection acceptor thread on port {}", port);
+    LOG.info("starting connection acceptor thread on port {}", port);
 
     try {
       final var address = new InetSocketAddress(port);
@@ -64,6 +66,7 @@ public final class ConnectionAcceptorThread extends Thread {
 
       acceptingSelector = Selector.open();
       serverSocketChannel.register(acceptingSelector, SelectionKey.OP_ACCEPT);
+      listeningOnAddress = address;
 
       isRunning.set(true);
       super.start();
@@ -72,7 +75,7 @@ public final class ConnectionAcceptorThread extends Thread {
       LangUtil.rethrowUnchecked(e);
     }
 
-    LOG.debug("started connection acceptor thread on port {}", port);
+    LOG.info("started connection acceptor thread on port {}", port);
   }
 
   /**
@@ -80,7 +83,7 @@ public final class ConnectionAcceptorThread extends Thread {
    */
   @Override
   public void interrupt() {
-    LOG.debug("stopping connection acceptor thread due to interrupt on port {}", port);
+    LOG.info("stopping connection acceptor thread due to interrupt on port {}", port);
 
     super.interrupt();
     isRunning.set(false);
@@ -93,7 +96,7 @@ public final class ConnectionAcceptorThread extends Thread {
       LangUtil.rethrowUnchecked(e);
     }
 
-    LOG.debug("stopped connection acceptor thread due to interrupt on port {}", port);
+    LOG.info("stopped connection acceptor thread due to interrupt on port {}", port);
   }
 
   /**
@@ -104,6 +107,15 @@ public final class ConnectionAcceptorThread extends Thread {
   @Override
   public boolean isInterrupted() {
     return super.isInterrupted() || !isRunning.get();
+  }
+
+  /**
+   * Gets the socket the server is accepting connections on.
+   *
+   * @return the address of the socket, or null if the thread has not been starteds
+   */
+  public InetSocketAddress getListeningOnAddress() {
+    return listeningOnAddress;
   }
 
   /**

@@ -36,12 +36,12 @@ public final class CacheProgressionThread extends Thread {
    */
   @Override
   public synchronized void start() {
-    LOG.debug("starting cache progression thread");
+    LOG.info("starting cache progression thread");
 
     isRunning.set(true);
     super.start();
 
-    LOG.debug("started cache progression thread");
+    LOG.info("started cache progression thread");
   }
 
   /**
@@ -49,8 +49,12 @@ public final class CacheProgressionThread extends Thread {
    */
   @Override
   public void interrupt() {
+    LOG.info("stopping cache progression thread due to interrupt");
+
     super.interrupt();
     isRunning.set(false);
+
+    LOG.info("stopped cache progression thread due to interrupt");
   }
 
   /**

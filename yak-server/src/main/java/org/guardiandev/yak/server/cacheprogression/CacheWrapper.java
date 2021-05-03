@@ -8,6 +8,8 @@ import org.guardiandev.yak.server.acceptor.IncomingCacheRequest;
 import org.guardiandev.yak.server.pool.MemoryPool;
 import org.guardiandev.yak.server.responder.CacheResponse;
 import org.guardiandev.yak.server.responder.CacheResponseToResponderBridge;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Cache wrapper that is capable of executing requests against its supplied cache.
@@ -17,6 +19,9 @@ import org.guardiandev.yak.server.responder.CacheResponseToResponderBridge;
  */
 public final class CacheWrapper {
 
+  private static final Logger LOG = LoggerFactory.getLogger(CacheWrapper.class);
+
+  private final String cacheName;
   private final YakCache<String, ByteBuffer> cache;
   private final CacheResponseToResponderBridge responderBridge;
   private final MemoryPool<IncomingCacheRequest> incomingCacheRequestPool;
@@ -26,13 +31,16 @@ public final class CacheWrapper {
   /**
    * Initialise the cache wrapper for the given cache.
    *
+   * @param cacheName                the name of this cache, used for logging purposes
    * @param cache                    the cache to execute requests against, if null all responses are cache not found
    * @param responderBridge          the responder to send responses to once executed
    * @param incomingCacheRequestPool the memory pool to return incoming cache requests to once processed
    */
-  public CacheWrapper(final YakCache<String, ByteBuffer> cache,
+  public CacheWrapper(final String cacheName,
+                      final YakCache<String, ByteBuffer> cache,
                       final CacheResponseToResponderBridge responderBridge,
                       final MemoryPool<IncomingCacheRequest> incomingCacheRequestPool) {
+    this.cacheName = cacheName;
 
     this.cache = cache;
     this.responderBridge = responderBridge;
@@ -71,11 +79,14 @@ public final class CacheWrapper {
     }
 
     @Override
-    public void accept(IncomingCacheRequest request) {
+    public void accept(final IncomingCacheRequest request) {
+
+      LOG.debug("[cacheName={},key={},requestId={}] executing cache request", cacheName, request.getKeyName(), request.getRequestId());
       cacheResponse.reset();
 
       // cache null means this is a responder for all non existing caches
       if (cache == null) {
+        LOG.debug("[cacheName={},key={},requestId={}] marking response as cache not found", cacheName, request.getKeyName(), request.getRequestId());
         cacheResponse.asCacheNotFound(request.getResponder());
       } else {
 
@@ -87,6 +98,7 @@ public final class CacheWrapper {
             processCreateRequest(request);
             break;
           default:
+            LOG.warn("[cacheName={},key={},requestId={},request={}] could not execute request", cacheName, request.getKeyName(), request.getRequestId(), request);
         }
       }
 
@@ -95,17 +107,23 @@ public final class CacheWrapper {
     }
 
     private void processGetRequest(final IncomingCacheRequest request) {
+
       final var result = cache.get(request.getKeyName());
 
       if (result == null) {
+        LOG.debug("[cacheName={},key={},requestId={}] key not found in cache", cacheName, request.getKeyName(), request.getRequestId());
         cacheResponse.asKeyNotFound(request.getKeyName(), request.getResponder());
       } else {
+        LOG.debug("[cacheName={},key={},requestId={}] key found in cache", cacheName, request.getKeyName(), request.getRequestId());
         cacheResponse.asFound(request.getKeyName(), result, request.getResponder());
       }
     }
 
     private void processCreateRequest(final IncomingCacheRequest request) {
+
       cache.put(request.getKeyName(), request.getContent());
+
+      LOG.debug("[cacheName={},key={},requestId={}] created key in cache", cacheName, request.getKeyName(), request.getRequestId());
       cacheResponse.asCreated(request.getKeyName(), request.getResponder());
     }
   }

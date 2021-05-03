@@ -51,11 +51,11 @@ public final class CacheInitializer {
 
     for (final var cache : config) {
       final var builtCache = buildFromConfig(cache);
-      final var wrap = new CacheWrapper(builtCache, responderBridge, incomingCacheRequestPool);
+      final var wrap = new CacheWrapper(cache.getName(), builtCache, responderBridge, incomingCacheRequestPool);
       caches.put(cache.getName(), wrap);
     }
 
-    caches.put(NULL_CACHE_RESPONDER_KEY, new CacheWrapper(null, responderBridge, incomingCacheRequestPool));
+    caches.put(NULL_CACHE_RESPONDER_KEY, new CacheWrapper("not-found-cache", null, responderBridge, incomingCacheRequestPool));
 
     return caches;
   }

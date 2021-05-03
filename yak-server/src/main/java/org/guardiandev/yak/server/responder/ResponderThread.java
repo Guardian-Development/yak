@@ -44,7 +44,7 @@ public final class ResponderThread extends Thread {
    */
   @Override
   public synchronized void start() {
-    LOG.debug("starting responder thread");
+    LOG.info("starting responder thread");
 
     try {
       respondingSelector = Selector.open();
@@ -56,7 +56,7 @@ public final class ResponderThread extends Thread {
       LangUtil.rethrowUnchecked(e);
     }
 
-    LOG.debug("started responder thread");
+    LOG.info("started responder thread");
   }
 
   /**
@@ -64,7 +64,7 @@ public final class ResponderThread extends Thread {
    */
   @Override
   public void interrupt() {
-    LOG.debug("stopping responder thread due to interrupt");
+    LOG.info("stopping responder thread due to interrupt");
 
     super.interrupt();
     isRunning.set(false);
@@ -76,7 +76,7 @@ public final class ResponderThread extends Thread {
       LangUtil.rethrowUnchecked(e);
     }
 
-    LOG.debug("stopped responder thread due to interrupt");
+    LOG.info("stopped responder thread due to interrupt");
   }
 
   /**

@@ -43,6 +43,9 @@ public final class YakServerRunner {
    * @return true if initialised successfully, else false
    */
   public boolean init() {
+
+    LOG.info("initialising server from config");
+
     final var networkBufferPool = Factory.networkBufferPool(
             config.getNetworkBufferPool().getPoolSize(),
             config.getNetworkBufferPool().getBufferSize(),
@@ -73,6 +76,8 @@ public final class YakServerRunner {
     acceptorThread = new ConnectionAcceptorThread(config.getPort(), connectionFactory, connectionCacheBridge, threadIdleStrategy);
     cacheProgressionThread = new CacheProgressionThread(cacheNameToCache.values(), threadIdleStrategy);
 
+    LOG.info("initialised server from config");
+
     return true;
   }
 
@@ -86,7 +91,9 @@ public final class YakServerRunner {
     cacheProgressionThread.start();
     acceptorThread.start();
 
-    LOG.info("server started");
+    LOG.info("[hostName={},port={}] server started",
+            acceptorThread.getListeningOnAddress().getHostName(),
+            acceptorThread.getListeningOnAddress().getPort());
   }
 
   /**

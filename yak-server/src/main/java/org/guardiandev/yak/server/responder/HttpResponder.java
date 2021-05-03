@@ -18,17 +18,22 @@ public final class HttpResponder implements Responder {
   private final SocketChannel rawConnection;
   private final MemoryPool<ByteBuffer> networkBufferPool;
   private final ByteBuffer writeBuffer;
+  private final String requestId;
 
   /**
    * Creates a http responder.
    *
    * @param rawConnection     the tcp connection to send the response to
    * @param networkBufferPool the pool of network buffers to take from
+   * @param requestId         the id to use when logging
    */
-  public HttpResponder(final SocketChannel rawConnection, final MemoryPool<ByteBuffer> networkBufferPool) {
+  public HttpResponder(final SocketChannel rawConnection,
+                       final MemoryPool<ByteBuffer> networkBufferPool,
+                       final String requestId) {
     this.rawConnection = rawConnection;
     this.networkBufferPool = networkBufferPool;
     this.writeBuffer = networkBufferPool.take();
+    this.requestId = requestId;
   }
 
   /**
@@ -46,6 +51,8 @@ public final class HttpResponder implements Responder {
     buildBody(body);
 
     writeBuffer.flip();
+
+    LOG.debug("[requestId={},responseCode={}] buffered response for request", requestId, responseCode.getCode());
   }
 
   private void buildRequestLine(final Result responseCode) {
@@ -87,13 +94,21 @@ public final class HttpResponder implements Responder {
   @Override
   public boolean progress() throws IOException {
 
+    LOG.trace("[requestId={}] progressing response", requestId);
+
     final int bytesWritten = rawConnection.write(writeBuffer);
     if (bytesWritten == -1) {
-      LOG.debug("failed to write to socket, making connection as done");
+      LOG.debug("[requestId={}] failed to write to socket, making connection as done", requestId);
       return true;
     }
 
-    return !writeBuffer.hasRemaining();
+    final var hasCompleted = !writeBuffer.hasRemaining();
+
+    if (hasCompleted) {
+      LOG.debug("[requestId={}] finished writing response to connection", requestId);
+    }
+
+    return hasCompleted;
   }
 
   /**

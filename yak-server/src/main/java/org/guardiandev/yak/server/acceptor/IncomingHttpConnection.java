@@ -78,6 +78,8 @@ public final class IncomingHttpConnection implements IncomingConnection {
       return true;
     }
 
+    LOG.trace("[correlationId={},request={}] progressing request", correlationId, request);
+
     final var bytesRead = rawConnection.read(readBuffer);
 
     if (bytesRead == -1) {
@@ -103,7 +105,7 @@ public final class IncomingHttpConnection implements IncomingConnection {
             stage = ProcessingStage.HEADERS;
             processedCommittedPosition = requestUriEndPosition;
 
-            LOG.trace("[correlationId={}][request={}] request uri extracted", correlationId, request);
+            LOG.trace("[correlationId={},request={}] request uri extracted", correlationId, request);
 
           } else if (stage == ProcessingStage.HEADERS) {
 
@@ -113,11 +115,11 @@ public final class IncomingHttpConnection implements IncomingConnection {
               readBuffer.position(headersEndPosition);
               processedCommittedPosition = headersEndPosition;
 
-              LOG.trace("[correlationId={}][request={}] all headers exrtracted", correlationId, request);
+              LOG.trace("[correlationId={},request={}] all headers extracted", correlationId, request);
 
               final var bodyLength = extractMessageBodyLength();
               if (bodyLength == 0) {
-                LOG.debug("[correlationId={}][request={}] completed processing incoming request", correlationId, request);
+                LOG.debug("[correlationId={},request={}] completed processing incoming request", correlationId, request);
                 isComplete = true;
                 return true;
               }
@@ -127,7 +129,7 @@ public final class IncomingHttpConnection implements IncomingConnection {
               readBuffer.position(headersEndPosition);
               processedCommittedPosition = headersEndPosition;
 
-              LOG.trace("[correlationId={}][request={}] header extracted", correlationId, request);
+              LOG.trace("[correlationId={},request={}] header extracted", correlationId, request);
             }
           }
         }
@@ -142,7 +144,7 @@ public final class IncomingHttpConnection implements IncomingConnection {
       if (bodySizeBuffered >= messageBodyLength) {
         extractMessageBody(processedCommittedPosition, messageBodyLength);
 
-        LOG.debug("[correlationId={}][request={}] completed processing incoming request", correlationId, request);
+        LOG.debug("[correlationId={},request={}] completed processing incoming request", correlationId, request);
 
         isComplete = true;
         return true;
@@ -229,18 +231,18 @@ public final class IncomingHttpConnection implements IncomingConnection {
     final var cacheRequest = incomingCacheRequestMemoryPool.take();
     cacheRequest.reset();
 
-    cacheRequest.setResponder(new HttpResponder(rawConnection, networkBufferPool))
+
+    var requestId = request.getHeaderOrNull(Constants.HTTP_REQUEST_ID_HEADER);
+    requestId = requestId == null ? UUID.randomUUID().toString() : requestId;
+
+    cacheRequest.setRequestId(requestId)
+            .setResponder(new HttpResponder(rawConnection, networkBufferPool, requestId))
             .setCacheName(cache)
             .setKeyName(key)
             .setType(type)
             .setContent(readBuffer);
 
-    var requestId = request.getHeaderOrNull(Constants.HTTP_REQUEST_ID_HEADER);
-    requestId = requestId == null ? UUID.randomUUID().toString() : requestId;
-
-    cacheRequest.setRequestId(requestId);
-
-    LOG.debug("[correlationId={}, requestId={}][{}] returning cache request", correlationId, requestId, cacheRequest);
+    LOG.debug("[correlationId={},requestId={},cacheRequest={}] returning cache request", correlationId, requestId, cacheRequest);
 
     return cacheRequest;
   }
