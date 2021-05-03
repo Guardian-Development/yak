@@ -74,6 +74,7 @@ final class HttpApiIntTest {
     final var request = HttpRequest.newBuilder()
             .uri(URI.create("http://localhost:9911/intTest/key-to-create"))
             .method("POST", HttpRequest.BodyPublishers.ofString("test-value"))
+            .header("X-Request-Id", "insert-key-test")
             .version(HttpClient.Version.HTTP_1_1)
             .timeout(Duration.ofSeconds(10))
             .build();
@@ -94,6 +95,7 @@ final class HttpApiIntTest {
     final var createRequest = HttpRequest.newBuilder()
             .uri(URI.create("http://localhost:9911/intTest/key-to-create"))
             .method("POST", HttpRequest.BodyPublishers.ofString("test-value"))
+            .header("X-Request-Id", "get-existing-key-test")
             .version(HttpClient.Version.HTTP_1_1)
             .timeout(Duration.ofSeconds(10))
             .build();
@@ -103,6 +105,7 @@ final class HttpApiIntTest {
 
     final var getRequest = HttpRequest.newBuilder()
             .uri(URI.create("http://localhost:9911/intTest/key-to-create"))
+            .header("X-Request-Id", "get-existing-key-test")
             .version(HttpClient.Version.HTTP_1_1)
             .timeout(Duration.ofSeconds(10))
             .build();
@@ -122,6 +125,7 @@ final class HttpApiIntTest {
 
     final var request = HttpRequest.newBuilder()
             .uri(URI.create("http://localhost:9911/intTest/non-existing-key"))
+            .header("X-Request-Id", "get-non-existing-key-test")
             .version(HttpClient.Version.HTTP_1_1)
             .timeout(Duration.ofSeconds(10))
             .build();
@@ -141,6 +145,7 @@ final class HttpApiIntTest {
 
     final var request = HttpRequest.newBuilder()
             .uri(URI.create("http://localhost:9911/non-existing-cache/key"))
+            .header("X-Request-Id", "get-non-existing-cache-test")
             .version(HttpClient.Version.HTTP_1_1)
             .timeout(Duration.ofSeconds(10))
             .build();
