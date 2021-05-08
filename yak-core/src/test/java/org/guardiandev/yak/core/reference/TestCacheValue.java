@@ -1,4 +1,4 @@
-package org.guardiandev.yak.reference;
+package org.guardiandev.yak.core.reference;
 
 import java.util.List;
 

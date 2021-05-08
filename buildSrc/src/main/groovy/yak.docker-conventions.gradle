@@ -1,0 +1,21 @@
+/**
+ * expects the following structure:
+ * /src/main/docker/
+ * /src/main/docker/Dockerfile
+ *
+ * the docker build context will be set the $projectDir
+ */
+
+// builds the docker image, tagging it with the same group id, name, and version as the JAR
+task buildDocker(type: Exec) {
+    dependsOn build
+    workingDir "$projectDir"
+    commandLine 'docker', 'build', '.', '-t', "$project.group/$project.name:$project.version", "-f", "$projectDir/src/main/docker/Dockerfile"
+}
+
+// runs the docker image
+task runDocker(type: Exec) {
+    dependsOn buildDocker
+    workingDir "$projectDir"
+    commandLine 'docker', 'run', "$project.group/$project.name:$project.version"
+}

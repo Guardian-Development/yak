@@ -1,4 +1,4 @@
-package org.guardiandev.yak.serialization;
+package org.guardiandev.yak.core.serialization;
 
 import org.agrona.concurrent.UnsafeBuffer;
 

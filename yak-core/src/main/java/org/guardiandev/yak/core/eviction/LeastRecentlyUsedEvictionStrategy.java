@@ -1,4 +1,4 @@
-package org.guardiandev.yak.eviction;
+package org.guardiandev.yak.core.eviction;
 
 import java.util.LinkedHashSet;
 import org.slf4j.Logger;

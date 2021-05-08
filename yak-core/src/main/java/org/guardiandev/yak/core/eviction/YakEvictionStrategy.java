@@ -1,6 +1,6 @@
-package org.guardiandev.yak.eviction;
+package org.guardiandev.yak.core.eviction;
 
-import org.guardiandev.yak.events.YakEventListener;
+import org.guardiandev.yak.core.events.YakEventListener;
 
 /**
  * Provides a method for evicting keys in the cache when required.

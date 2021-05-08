@@ -1,11 +1,12 @@
-package org.guardiandev.yak;
+package org.guardiandev.yak.core;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.agrona.concurrent.UnsafeBuffer;
-import org.guardiandev.yak.reference.TestCacheValue;
-import org.guardiandev.yak.reference.TestCacheValueSerializer;
-import org.guardiandev.yak.serialization.YakValueSerializer;
+import org.guardiandev.yak.core.YakCache;
+import org.guardiandev.yak.core.reference.TestCacheValue;
+import org.guardiandev.yak.core.reference.TestCacheValueSerializer;
+import org.guardiandev.yak.core.serialization.YakValueSerializer;
 import org.junit.jupiter.api.Test;
 
 class YakCacheTest {

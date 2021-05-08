@@ -1,7 +1,7 @@
-package org.guardiandev.yak.storage;
+package org.guardiandev.yak.core.storage;
 
 import java.util.UUID;
-import org.guardiandev.yak.utils.IntegerExtensions;
+import org.guardiandev.yak.core.utils.IntegerExtensions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

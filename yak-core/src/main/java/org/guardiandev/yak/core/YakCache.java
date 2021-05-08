@@ -1,16 +1,16 @@
-package org.guardiandev.yak;
+package org.guardiandev.yak.core;
 
-import static org.guardiandev.yak.events.YakEventListener.YakEvent.GET_CACHE_HIT;
-import static org.guardiandev.yak.events.YakEventListener.YakEvent.GET_CACHE_MISS;
-import static org.guardiandev.yak.events.YakEventListener.YakEvent.PUT;
+import static org.guardiandev.yak.core.events.YakEventListener.YakEvent.GET_CACHE_HIT;
+import static org.guardiandev.yak.core.events.YakEventListener.YakEvent.GET_CACHE_MISS;
+import static org.guardiandev.yak.core.events.YakEventListener.YakEvent.PUT;
 
 import java.util.List;
 import java.util.Objects;
-import org.guardiandev.yak.events.YakEventListener;
-import org.guardiandev.yak.eviction.YakEvictionStrategy;
-import org.guardiandev.yak.serialization.YakValueSerializer;
-import org.guardiandev.yak.storage.OpenAddressingHashMap;
-import org.guardiandev.yak.storage.YakValueStorage;
+import org.guardiandev.yak.core.events.YakEventListener;
+import org.guardiandev.yak.core.eviction.YakEvictionStrategy;
+import org.guardiandev.yak.core.serialization.YakValueSerializer;
+import org.guardiandev.yak.core.storage.OpenAddressingHashMap;
+import org.guardiandev.yak.core.storage.YakValueStorage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

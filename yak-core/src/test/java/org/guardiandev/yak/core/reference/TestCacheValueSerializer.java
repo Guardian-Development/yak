@@ -1,7 +1,7 @@
-package org.guardiandev.yak.reference;
+package org.guardiandev.yak.core.reference;
 
 import org.agrona.concurrent.UnsafeBuffer;
-import org.guardiandev.yak.serialization.YakValueSerializer;
+import org.guardiandev.yak.core.serialization.YakValueSerializer;
 
 /**
  * Test serializer for storing/retrieving {@link TestCacheValue} from the cache.

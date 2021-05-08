@@ -1,12 +1,14 @@
 package org.guardiandev.yak.server;
 
 import java.nio.file.Path;
+import java.util.stream.Collectors;
 import org.agrona.concurrent.BackoffIdleStrategy;
 import org.guardiandev.yak.server.acceptor.ConnectionAcceptorThread;
 import org.guardiandev.yak.server.acceptor.IncomingConnectionFactory;
 import org.guardiandev.yak.server.cacheprogression.CacheInitializer;
 import org.guardiandev.yak.server.cacheprogression.CacheProgressionThread;
 import org.guardiandev.yak.server.cacheprogression.IncomingConnectionToCacheWrapperBridge;
+import org.guardiandev.yak.server.config.YakCacheConfig;
 import org.guardiandev.yak.server.config.YakConfigFromJsonBuilder;
 import org.guardiandev.yak.server.config.YakServerConfig;
 import org.guardiandev.yak.server.pool.Factory;
@@ -70,6 +72,8 @@ public final class YakServerRunner {
     final var cacheInit = new CacheInitializer(config.getCaches());
     final var cacheNameToCache = cacheInit.init(cacheResponseBridge, incomingCacheRequestMemoryPool);
 
+    LOG.info("caches available on server: {}", config.getCaches().stream().map(YakCacheConfig::getName).collect(Collectors.toList()));
+
     final var connectionFactory = new IncomingConnectionFactory(networkBufferPool, httpRequestMemoryPool, incomingCacheRequestMemoryPool);
     final var connectionCacheBridge = new IncomingConnectionToCacheWrapperBridge(cacheNameToCache);
 
@@ -91,6 +95,8 @@ public final class YakServerRunner {
     cacheProgressionThread.start();
     acceptorThread.start();
 
+    Runtime.getRuntime().addShutdownHook(new Thread(YakServerRunner.this::stop, "shutdown-thread"));
+
     LOG.info("[hostName={},port={}] server started",
             acceptorThread.getListeningOnAddress().getHostName(),
             acceptorThread.getListeningOnAddress().getPort());
@@ -109,9 +115,13 @@ public final class YakServerRunner {
    * Stop all threads within the server.
    */
   public void stop() {
+    LOG.info("stopping server");
+
     acceptorThread.interrupt();
     cacheProgressionThread.interrupt();
     responderThread.interrupt();
+
+    LOG.info("server stopped");
   }
 
   /**
