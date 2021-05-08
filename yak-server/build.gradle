@@ -2,9 +2,24 @@ plugins {
     id "me.champeau.jmh" version "0.6.2"
     id "yak.java-conventions"
     id "yak.java-integration-tests"
+    id "yak.docker-conventions"
 }
 
 dependencies {
     implementation project(":yak-core")
     implementation "com.fasterxml.jackson.core:jackson-databind:2.12.2"
 }
+
+task copyDependencies(type: Copy) {
+    from configurations.compileClasspath
+    into "$buildDir/lib"
+}
+
+jar {
+    manifest {
+        attributes["Main-Class"] = "org.guardiandev.yak.server.YakServerRunner"
+        attributes["Class-Path"] = configurations.compileClasspath.collect { 'lib/' + it.getName() }.join(' ')
+    }
+}
+
+buildDocker.dependsOn copyDependencies
