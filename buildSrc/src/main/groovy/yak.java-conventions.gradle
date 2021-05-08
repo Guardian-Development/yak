@@ -3,7 +3,6 @@ plugins {
     id 'maven-publish'
     id 'jacoco'
     id 'checkstyle'
-    id 'me.champeau.jmh'
 }
 
 group = "org.guardiandev"
@@ -64,13 +63,6 @@ checkstyle {
     configDirectory = file("${rootProject.rootDir}/config/checkstyle")
     maxErrors = 0
     maxWarnings = 0
-}
-
-jmh {
-    jmhVersion = '1.28'
-    warmupIterations = 2
-    iterations = 5
-    fork = 1
 }
 
 javadoc {
