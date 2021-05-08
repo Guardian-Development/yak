@@ -95,6 +95,8 @@ public final class YakServerRunner {
     cacheProgressionThread.start();
     acceptorThread.start();
 
+    Runtime.getRuntime().addShutdownHook(new Thread(YakServerRunner.this::stop, "shutdown-thread"));
+
     LOG.info("[hostName={},port={}] server started",
             acceptorThread.getListeningOnAddress().getHostName(),
             acceptorThread.getListeningOnAddress().getPort());
@@ -113,9 +115,13 @@ public final class YakServerRunner {
    * Stop all threads within the server.
    */
   public void stop() {
+    LOG.info("stopping server");
+
     acceptorThread.interrupt();
     cacheProgressionThread.interrupt();
     responderThread.interrupt();
+
+    LOG.info("server stopped");
   }
 
   /**
