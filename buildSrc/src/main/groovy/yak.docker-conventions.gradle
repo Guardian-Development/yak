@@ -13,7 +13,7 @@ task buildDocker(type: Exec) {
     commandLine 'docker', 'build', '.', '-t', "$project.group/$project.name:$project.version", "-f", "$projectDir/src/main/docker/Dockerfile"
 }
 
-// builds the docker image, tagging it with the same group id, name, and version as the JAR
+// runs the docker image
 task runDocker(type: Exec) {
     dependsOn buildDocker
     workingDir "$projectDir"
