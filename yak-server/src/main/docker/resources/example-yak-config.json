@@ -1,0 +1,32 @@
+{
+  "port": 9000,
+  "networkBufferPool": {
+    "poolSize": 50,
+    "fillOnCreation": true,
+    "bufferSize": 1024
+  },
+  "httpRequestMemoryPool": {
+    "poolSize": 50,
+    "fillOnCreation": true
+  },
+  "incomingCacheRequestPool": {
+    "poolSize": 50,
+    "fillOnCreation": true,
+    "bufferSize": 256
+  },
+  "threadIdleStrategy": {
+    "maxSpins": 100,
+    "maxYields" : 10000,
+    "minParkPeriodNs": 10,
+    "maxParkPeriodNs" : 10000
+  },
+  "caches": [
+    {
+      "name": "yak",
+      "maximumKeys": 64,
+      "fixedValueSize": 128,
+      "valueStorageMechanism": "DirectMemoryStorage",
+      "evictionStrategy": "LRU"
+    }
+  ]
+}

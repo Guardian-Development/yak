@@ -1,12 +1,14 @@
 package org.guardiandev.yak.server;
 
 import java.nio.file.Path;
+import java.util.stream.Collectors;
 import org.agrona.concurrent.BackoffIdleStrategy;
 import org.guardiandev.yak.server.acceptor.ConnectionAcceptorThread;
 import org.guardiandev.yak.server.acceptor.IncomingConnectionFactory;
 import org.guardiandev.yak.server.cacheprogression.CacheInitializer;
 import org.guardiandev.yak.server.cacheprogression.CacheProgressionThread;
 import org.guardiandev.yak.server.cacheprogression.IncomingConnectionToCacheWrapperBridge;
+import org.guardiandev.yak.server.config.YakCacheConfig;
 import org.guardiandev.yak.server.config.YakConfigFromJsonBuilder;
 import org.guardiandev.yak.server.config.YakServerConfig;
 import org.guardiandev.yak.server.pool.Factory;
@@ -69,6 +71,8 @@ public final class YakServerRunner {
     final var cacheResponseBridge = new CacheResponseToResponderBridge(responderThread);
     final var cacheInit = new CacheInitializer(config.getCaches());
     final var cacheNameToCache = cacheInit.init(cacheResponseBridge, incomingCacheRequestMemoryPool);
+
+    LOG.info("caches available on server: {}", config.getCaches().stream().map(YakCacheConfig::getName).collect(Collectors.toList()));
 
     final var connectionFactory = new IncomingConnectionFactory(networkBufferPool, httpRequestMemoryPool, incomingCacheRequestMemoryPool);
     final var connectionCacheBridge = new IncomingConnectionToCacheWrapperBridge(cacheNameToCache);

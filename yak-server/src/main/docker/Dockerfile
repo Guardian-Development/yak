@@ -5,14 +5,10 @@
 #
 # ./gradlew buildDocker
 #
-# Then run the container using:
-#
-# ./gradlew runDocker
-#
 ###
 
 # build custom JRE
-FROM openjdk:14-alpine AS jre-build
+FROM openjdk:17-alpine AS jre-build
 WORKDIR /app
 
 COPY build/lib/* build/lib/
@@ -25,7 +21,7 @@ RUN jdeps \
 # suppress any warnings printed to console
 -q \
 # java release version targeting
---multi-release 14 \
+--multi-release 17 \
 # output the dependencies at end of run
 --print-module-deps \
 # specify the the dependencies for the jar
@@ -50,8 +46,14 @@ WORKDIR /deployment
 COPY --from=jre-build /app/jre jre
 COPY --from=jre-build /app/build/lib/* lib/
 COPY --from=jre-build /app/build/app.jar app.jar
-RUN mkdir jfr
 
-ENV CONFIG_FILE_PATH=/opt/yak/config/yak-config.json
+COPY src/main/docker/resources/log4j2.xml /opt/yak/config/log4j2.xml
+COPY src/main/docker/resources/example-yak-config.json /opt/yak/config/yak-config.json
 
-ENTRYPOINT jre/bin/java -jar app.jar ${CONFIG_FILE_PATH}
+ENV YAK_CONFIG_FILE_PATH=/opt/yak/config/yak-config.json
+ENV YAK_LOG4J_CONFIG_PATH=/opt/yak/config/log4j2.xml
+
+ENTRYPOINT jre/bin/java \
+    -Dlog4j.configurationFile=${YAK_LOG4J_CONFIG_PATH} \
+    -jar app.jar \
+    ${YAK_CONFIG_FILE_PATH}
