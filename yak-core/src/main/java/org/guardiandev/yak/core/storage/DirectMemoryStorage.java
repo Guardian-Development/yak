@@ -1,4 +1,4 @@
-package org.guardiandev.yak.storage;
+package org.guardiandev.yak.core.storage;
 
 import java.nio.ByteBuffer;
 import org.agrona.concurrent.UnsafeBuffer;

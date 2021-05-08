@@ -1,8 +1,9 @@
-package org.guardiandev.yak.eviction;
+package org.guardiandev.yak.core.eviction;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.guardiandev.yak.events.YakEventListener;
+import org.guardiandev.yak.core.events.YakEventListener;
+import org.guardiandev.yak.core.eviction.LeastRecentlyUsedEvictionStrategy;
 import org.junit.jupiter.api.Test;
 
 class LeastRecentlyUsedEvictionStrategyTest {

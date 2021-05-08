@@ -1,12 +1,12 @@
-package org.guardiandev.yak;
+package org.guardiandev.yak.core;
 
 import java.util.List;
 import java.util.UUID;
-import org.guardiandev.yak.events.YakEventListener;
-import org.guardiandev.yak.eviction.YakEvictionStrategy;
-import org.guardiandev.yak.serialization.YakValueSerializer;
-import org.guardiandev.yak.storage.YakValueStorage;
-import org.guardiandev.yak.utils.IntegerExtensions;
+import org.guardiandev.yak.core.events.YakEventListener;
+import org.guardiandev.yak.core.eviction.YakEvictionStrategy;
+import org.guardiandev.yak.core.serialization.YakValueSerializer;
+import org.guardiandev.yak.core.storage.YakValueStorage;
+import org.guardiandev.yak.core.utils.IntegerExtensions;
 
 /**
  * Used to help build a cache, with default parameters used for all not-provided user values.

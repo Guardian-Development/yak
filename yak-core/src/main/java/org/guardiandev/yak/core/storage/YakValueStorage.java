@@ -1,4 +1,4 @@
-package org.guardiandev.yak.storage;
+package org.guardiandev.yak.core.storage;
 
 import org.agrona.concurrent.UnsafeBuffer;
 

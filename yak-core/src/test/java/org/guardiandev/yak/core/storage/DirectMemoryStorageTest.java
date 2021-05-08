@@ -1,8 +1,9 @@
-package org.guardiandev.yak.storage;
+package org.guardiandev.yak.core.storage;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import org.guardiandev.yak.core.storage.DirectMemoryStorage;
 import org.junit.jupiter.api.Test;
 
 class DirectMemoryStorageTest {

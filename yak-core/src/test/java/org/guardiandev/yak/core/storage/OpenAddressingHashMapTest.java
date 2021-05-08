@@ -1,7 +1,8 @@
-package org.guardiandev.yak.storage;
+package org.guardiandev.yak.core.storage;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.guardiandev.yak.core.storage.OpenAddressingHashMap;
 import org.junit.jupiter.api.Test;
 
 class OpenAddressingHashMapTest {

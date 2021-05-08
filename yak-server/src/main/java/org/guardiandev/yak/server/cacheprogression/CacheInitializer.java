@@ -5,15 +5,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.agrona.concurrent.UnsafeBuffer;
-import org.guardiandev.yak.YakCache;
-import org.guardiandev.yak.YakCacheBuilder;
-import org.guardiandev.yak.eviction.YakEvictionStrategy;
-import org.guardiandev.yak.serialization.YakValueSerializer;
+import org.guardiandev.yak.core.YakCache;
+import org.guardiandev.yak.core.YakCacheBuilder;
+import org.guardiandev.yak.core.eviction.YakEvictionStrategy;
+import org.guardiandev.yak.core.serialization.YakValueSerializer;
+import org.guardiandev.yak.core.storage.YakValueStorage;
 import org.guardiandev.yak.server.acceptor.IncomingCacheRequest;
 import org.guardiandev.yak.server.config.YakCacheConfig;
 import org.guardiandev.yak.server.pool.MemoryPool;
 import org.guardiandev.yak.server.responder.CacheResponseToResponderBridge;
-import org.guardiandev.yak.storage.YakValueStorage;
 
 
 /**

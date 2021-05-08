@@ -3,7 +3,7 @@ package org.guardiandev.yak.server.cacheprogression;
 import java.nio.ByteBuffer;
 import java.util.function.Consumer;
 import org.agrona.concurrent.OneToOneConcurrentArrayQueue;
-import org.guardiandev.yak.YakCache;
+import org.guardiandev.yak.core.YakCache;
 import org.guardiandev.yak.server.acceptor.IncomingCacheRequest;
 import org.guardiandev.yak.server.pool.MemoryPool;
 import org.guardiandev.yak.server.responder.CacheResponse;

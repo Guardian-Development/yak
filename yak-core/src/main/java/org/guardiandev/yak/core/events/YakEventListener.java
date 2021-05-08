@@ -1,4 +1,4 @@
-package org.guardiandev.yak.events;
+package org.guardiandev.yak.core.events;
 
 /**
  * Provides a mechanism for listening to events occurring within the cache in a synchronous context.
