@@ -12,22 +12,18 @@ public final class IncomingConnectionFactory {
 
   private final MemoryPool<ByteBuffer> networkBufferPool;
   private final MemoryPool<HttpRequest> httpRequestMemoryPool;
-  private final MemoryPool<IncomingCacheRequest> incomingCacheRequestMemoryPool;
 
   /**
    * Creates a new connection factory.
    *
    * @param networkBufferPool              the pool of byte buffers to use when creating connections
    * @param httpRequestMemoryPool          the pool of http request objects to use when creating connections
-   * @param incomingCacheRequestMemoryPool the pool of cache request objects to use when processing connections
    */
   public IncomingConnectionFactory(final MemoryPool<ByteBuffer> networkBufferPool,
-                                   final MemoryPool<HttpRequest> httpRequestMemoryPool,
-                                   final MemoryPool<IncomingCacheRequest> incomingCacheRequestMemoryPool) {
+                                   final MemoryPool<HttpRequest> httpRequestMemoryPool) {
 
     this.networkBufferPool = networkBufferPool;
     this.httpRequestMemoryPool = httpRequestMemoryPool;
-    this.incomingCacheRequestMemoryPool = incomingCacheRequestMemoryPool;
   }
 
   /**
@@ -39,6 +35,6 @@ public final class IncomingConnectionFactory {
    */
   public IncomingConnection wrapConnection(final SocketChannel rawConnection) throws IOException {
     return new IncomingHttpConnection(
-            rawConnection, networkBufferPool, httpRequestMemoryPool, incomingCacheRequestMemoryPool, rawConnection.getRemoteAddress().toString());
+            rawConnection, networkBufferPool, httpRequestMemoryPool, rawConnection.getRemoteAddress().toString());
   }
 }

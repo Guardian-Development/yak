@@ -4,6 +4,7 @@ import java.nio.file.Path;
 import java.util.stream.Collectors;
 import org.agrona.concurrent.BackoffIdleStrategy;
 import org.guardiandevelopment.yak.server.acceptor.ConnectionAcceptorThread;
+import org.guardiandevelopment.yak.server.acceptor.HttpRequestProcessor;
 import org.guardiandevelopment.yak.server.acceptor.IncomingConnectionFactory;
 import org.guardiandevelopment.yak.server.cacheprogression.CacheInitializer;
 import org.guardiandevelopment.yak.server.cacheprogression.CacheProgressionThread;
@@ -54,6 +55,7 @@ public final class YakServerRunner {
             config.getNetworkBufferPool().isFillOnCreation());
     final var httpRequestMemoryPool = Factory.httpRequestPool(
             config.getHttpRequestMemoryPool().getPoolSize(),
+            config.getHttpRequestMemoryPool().getBufferSize(),
             config.getHttpRequestMemoryPool().isFillOnCreation());
     final var incomingCacheRequestMemoryPool = Factory.incomingCacheRequestPool(
             config.getIncomingCacheRequestPool().getPoolSize(),
@@ -74,10 +76,11 @@ public final class YakServerRunner {
 
     LOG.info("caches available on server: {}", config.getCaches().stream().map(YakCacheConfig::getName).collect(Collectors.toList()));
 
-    final var connectionFactory = new IncomingConnectionFactory(networkBufferPool, httpRequestMemoryPool, incomingCacheRequestMemoryPool);
+    final var connectionFactory = new IncomingConnectionFactory(networkBufferPool, httpRequestMemoryPool);
     final var connectionCacheBridge = new IncomingConnectionToCacheWrapperBridge(cacheNameToCache);
+    final var httpRequestProcessor = new HttpRequestProcessor(connectionCacheBridge, networkBufferPool, incomingCacheRequestMemoryPool);
 
-    acceptorThread = new ConnectionAcceptorThread(config.getPort(), connectionFactory, connectionCacheBridge, threadIdleStrategy);
+    acceptorThread = new ConnectionAcceptorThread(config.getPort(), connectionFactory, httpRequestProcessor, threadIdleStrategy);
     cacheProgressionThread = new CacheProgressionThread(cacheNameToCache.values(), threadIdleStrategy);
 
     LOG.info("initialised server from config");

@@ -8,20 +8,12 @@ import java.util.List;
 public final class YakServerConfig {
 
   private Integer port;
+  private YakEndpointConfig endpointConfig;
   private List<YakCacheConfig> caches;
   private YakMemoryPoolBufferConfig networkBufferPool;
-  private YakMemoryPoolConfig httpRequestMemoryPool;
+  private YakMemoryPoolBufferConfig httpRequestMemoryPool;
   private YakMemoryPoolBufferConfig incomingCacheRequestPool;
   private YakThreadIdleStrategy threadIdleStrategy;
-
-  public List<YakCacheConfig> getCaches() {
-    return caches;
-  }
-
-  public YakServerConfig setCaches(List<YakCacheConfig> caches) {
-    this.caches = caches;
-    return this;
-  }
 
   public int getPort() {
     return port;
@@ -29,6 +21,24 @@ public final class YakServerConfig {
 
   public YakServerConfig setPort(int port) {
     this.port = port;
+    return this;
+  }
+
+  public YakEndpointConfig getEndpointConfig() {
+    return endpointConfig;
+  }
+
+  public YakServerConfig setEndpointConfig(YakEndpointConfig endpointConfig) {
+    this.endpointConfig = endpointConfig;
+    return this;
+  }
+
+  public List<YakCacheConfig> getCaches() {
+    return caches;
+  }
+
+  public YakServerConfig setCaches(List<YakCacheConfig> caches) {
+    this.caches = caches;
     return this;
   }
 
@@ -41,11 +51,11 @@ public final class YakServerConfig {
     return this;
   }
 
-  public YakMemoryPoolConfig getHttpRequestMemoryPool() {
+  public YakMemoryPoolBufferConfig getHttpRequestMemoryPool() {
     return httpRequestMemoryPool;
   }
 
-  public YakServerConfig setHttpRequestMemoryPool(YakMemoryPoolConfig httpRequestMemoryPool) {
+  public YakServerConfig setHttpRequestMemoryPool(YakMemoryPoolBufferConfig httpRequestMemoryPool) {
     this.httpRequestMemoryPool = httpRequestMemoryPool;
     return this;
   }

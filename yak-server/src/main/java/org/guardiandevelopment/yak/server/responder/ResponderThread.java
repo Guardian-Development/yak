@@ -2,6 +2,7 @@ package org.guardiandevelopment.yak.server.responder;
 
 import java.io.IOException;
 import java.nio.channels.ClosedChannelException;
+import java.nio.channels.ClosedSelectorException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -116,7 +117,7 @@ public final class ResponderThread extends Thread {
     int numberAvailable = 0;
     try {
       numberAvailable = respondingSelector.selectNow();
-    } catch (IOException e) {
+    } catch (IOException | ClosedSelectorException e) {
       LOG.warn("unable to select connections to write from selector", e);
     }
 
