@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Provides routing for incoming connections, to the cache they need to execute over.
  */
-public final class IncomingConnectionToCacheWrapperBridge {
+public class IncomingConnectionToCacheWrapperBridge {
 
   private static final Logger LOG = LoggerFactory.getLogger(IncomingConnectionToCacheWrapperBridge.class);
 
