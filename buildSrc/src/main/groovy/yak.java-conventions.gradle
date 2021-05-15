@@ -5,8 +5,8 @@ plugins {
     id 'checkstyle'
 }
 
-group = "org.guardiandev"
-version = "${property('org.guardiandev.yak.version')}"
+group = "org.guardiandevelopment"
+version = "${property('org.guardiandevelopment.yak.version')}"
 sourceCompatibility = '11'
 
 java {

@@ -1,6 +1,6 @@
 package org.guardiandev.yak;
 
-import org.guardiandev.yak.core.YakCacheBuilder;
+import org.guardiandevelopment.yak.core.YakCacheBuilder;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Mode;

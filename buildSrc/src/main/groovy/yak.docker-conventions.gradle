@@ -8,14 +8,45 @@
 
 // builds the docker image, tagging it with the same group id, name, and version as the JAR
 task buildDocker(type: Exec) {
+    group 'docker'
     dependsOn build
     workingDir "$projectDir"
-    commandLine 'docker', 'build', '.', '-t', "$project.group/$project.name:$project.version", "-f", "$projectDir/src/main/docker/Dockerfile"
+    commandLine 'docker', 'build', '--rm', '.',
+            '-t', "$project.group/$project.name:$project.version",
+            "-f", "$projectDir/src/main/docker/Dockerfile"
 }
 
 // runs the docker image
 task runDocker(type: Exec) {
+    group 'docker'
     dependsOn buildDocker
     workingDir "$projectDir"
     commandLine 'docker', 'run', "$project.group/$project.name:$project.version"
+}
+
+// login to the docker account
+task loginDocker(type: Exec) {
+    group 'docker'
+    workingDir "$projectDir"
+    commandLine 'docker', 'login',
+            '--username', "${project.property('org.guardiandevelopment.docker.username')}",
+            '--password', "${project.property('org.guardiandevelopment.docker.password')}"
+}
+
+// tag your image to match the docker account ready for push
+task tagForPush(type: Exec) {
+    group 'docker'
+    workingDir "$projectDir"
+    commandLine 'docker', 'tag',
+            "$project.group/$project.name:$project.version",
+            "${project.property('org.guardiandevelopment.docker.repository')}/$project.name:$project.version"
+}
+
+
+// publish the image to the repository specified
+task publishDocker(type: Exec) {
+    group 'docker'
+    dependsOn buildDocker, loginDocker, tagForPush
+    workingDir "$projectDir"
+    commandLine 'docker', 'push', "${project.property('org.guardiandevelopment.docker.repository')}/$project.name:$project.version"
 }
