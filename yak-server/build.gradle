@@ -21,7 +21,7 @@ task copyDependencies(type: Copy) {
 
 jar {
     manifest {
-        attributes["Main-Class"] = "org.guardiandev.yak.server.YakServerRunner"
+        attributes["Main-Class"] = "org.guardiandevelopment.yak.server.YakServerRunner"
         attributes["Class-Path"] = configurations.runtimeClasspath.collect { 'lib/' + it.getName() }.join(' ')
     }
 }

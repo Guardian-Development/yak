@@ -82,7 +82,7 @@ public final class ConnectionAcceptorThread extends Thread {
    */
   @Override
   public void interrupt() {
-    LOG.info("stopping connection acceptor thread due to interrupt on port {}", port);
+    LOG.info("stopping connection acceptor thread on port {} due to interrupt", port);
 
     super.interrupt();
     isRunning.set(false);
@@ -95,7 +95,7 @@ public final class ConnectionAcceptorThread extends Thread {
       LangUtil.rethrowUnchecked(e);
     }
 
-    LOG.info("stopped connection acceptor thread due to interrupt on port {}", port);
+    LOG.info("stopped connection acceptor thread on port {} due to interrupt", port);
   }
 
   /**

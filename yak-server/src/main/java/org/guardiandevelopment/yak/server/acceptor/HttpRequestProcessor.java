@@ -11,11 +11,15 @@ import org.guardiandevelopment.yak.server.http.Constants;
 import org.guardiandevelopment.yak.server.pool.MemoryPool;
 import org.guardiandevelopment.yak.server.responder.HttpResponder;
 import org.guardiandevelopment.yak.server.responder.ResponderBridge;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Responsible for taking a http request, and routing it internally into the application based on its contents.
  */
 public final class HttpRequestProcessor {
+
+  private static final Logger LOG = LoggerFactory.getLogger(HttpRequestProcessor.class);
 
   private static final Pattern HTTP_ENDPOINT_PATTERN = Pattern.compile("(http://(.)+?)*/(?<resource>.+)");
 
@@ -60,33 +64,42 @@ public final class HttpRequestProcessor {
   public void processReadyRequest(final HttpRequest request, final SocketChannel rawConnection) {
     endpointMatcher.reset(request.getRequestUri());
 
+    final var requestId = getRequestId(request);
+
     if (endpointMatcher.matches()) {
       final var requestedResource = endpointMatcher.group("resource");
 
+      LOG.debug("[requestId={}] process request for resource {}", requestId, requestedResource);
+
       if (requestedResource.equals(endpointConfig.getHealthCheck()) && "GET".equalsIgnoreCase(request.getMethod())) {
-        handleHealthCheck(request, rawConnection);
+        handleHealthCheck(requestId, rawConnection);
       } else if (requestedResource.startsWith(endpointConfig.getCache())) {
-        handleCacheRequest(request, rawConnection);
+        handleCacheRequest(requestId, request, rawConnection);
       } else {
-        handleUnsupportedOperation(request, rawConnection);
+        handleUnsupportedOperation(requestId, rawConnection);
       }
 
     } else {
-      handleUnsupportedOperation(request, rawConnection);
+      LOG.debug("[requestId={}}] request uri did not match required regex pattern", requestId);
+
+      handleUnsupportedOperation(requestId, rawConnection);
     }
   }
 
-  private void handleHealthCheck(final HttpRequest request, final SocketChannel rawConnection) {
-    final var requestId = getRequestId(request);
+  private void handleHealthCheck(final String requestId, final SocketChannel rawConnection) {
+    LOG.debug("[requestId={}] processing request for health check", requestId);
     responderBridge.bufferHealthCheckResponse(new HttpResponder(rawConnection, networkBufferPool, requestId), true);
   }
 
-  private void handleUnsupportedOperation(final HttpRequest request, final SocketChannel rawConnection) {
-    final var requestId = getRequestId(request);
+  private void handleUnsupportedOperation(final String requestId, final SocketChannel rawConnection) {
+    LOG.debug("[requestId={}] processing unsupported operation", requestId);
     responderBridge.bufferUnsupportedOperationResponse(new HttpResponder(rawConnection, networkBufferPool, requestId));
   }
 
-  private void handleCacheRequest(final HttpRequest request, final SocketChannel rawConnection) {
+  private void handleCacheRequest(final String requestId, final HttpRequest request, final SocketChannel rawConnection) {
+
+    LOG.debug("[requestId={}] processing cache request", requestId);
+
     final var uriParts = request.getRequestUri().split(Constants.SLASH);
     final var key = uriParts[uriParts.length - 1];
     final var cache = uriParts[uriParts.length - 2];
@@ -95,14 +108,14 @@ public final class HttpRequestProcessor {
     final var cacheRequest = incomingCacheRequestMemoryPool.take();
     cacheRequest.reset();
 
-    final var requestId = getRequestId(request);
-
     cacheRequest.setRequestId(requestId)
             .setResponder(new HttpResponder(rawConnection, networkBufferPool, requestId))
             .setCacheName(cache)
             .setKeyName(key)
             .setType(type)
             .setContent(request.getRequestBody());
+
+    LOG.debug("[requestId={},request={},cacheRequest={}] processing cache request", requestId, request, cacheRequest);
 
     cacheWrapperBridge.acceptIncomingConnection(cacheRequest);
   }
@@ -121,6 +134,15 @@ public final class HttpRequestProcessor {
 
   private String getRequestId(final HttpRequest request) {
     var requestId = request.getHeaderOrNull(Constants.HTTP_REQUEST_ID_HEADER);
-    return requestId == null ? UUID.randomUUID().toString() : requestId;
+
+    if (requestId == null) {
+      final var id = UUID.randomUUID().toString();
+      LOG.debug("[requestId={}] no request id present, assigning one", id);
+      return id;
+    }
+
+    LOG.debug("[requestId={}] request id provided", requestId);
+
+    return requestId;
   }
 }

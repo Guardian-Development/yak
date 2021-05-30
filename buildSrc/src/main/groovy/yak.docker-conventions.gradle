@@ -21,7 +21,7 @@ task runDocker(type: Exec) {
     group 'docker'
     dependsOn buildDocker
     workingDir "$projectDir"
-    commandLine 'docker', 'run', "$project.group/$project.name:$project.version"
+    commandLine 'docker', 'run', '--rm', "$project.group/$project.name:$project.version"
 }
 
 // login to the docker account

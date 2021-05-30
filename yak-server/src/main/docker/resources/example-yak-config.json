@@ -1,5 +1,9 @@
 {
   "port": 9000,
+  "endpointConfig": {
+    "healthCheck": "health",
+    "cache": "cache"
+  },
   "networkBufferPool": {
     "poolSize": 50,
     "fillOnCreation": true,
@@ -7,7 +11,8 @@
   },
   "httpRequestMemoryPool": {
     "poolSize": 50,
-    "fillOnCreation": true
+    "fillOnCreation": true,
+    "bufferSize": 256
   },
   "incomingCacheRequestPool": {
     "poolSize": 50,
