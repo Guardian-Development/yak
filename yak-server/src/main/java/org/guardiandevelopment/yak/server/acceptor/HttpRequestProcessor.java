@@ -1,5 +1,6 @@
 package org.guardiandevelopment.yak.server.acceptor;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.util.UUID;
@@ -65,6 +66,13 @@ public final class HttpRequestProcessor {
     endpointMatcher.reset(request.getRequestUri());
 
     final var requestId = getRequestId(request);
+
+    try {
+      final var ipAddress = rawConnection.getRemoteAddress();
+      LOG.debug("[idAddress={},requestId={}] assigned request id", ipAddress, requestId);
+    } catch (IOException e) {
+      LOG.debug("[requestId={}] unable to get remote ip address for request id", requestId);
+    }
 
     if (endpointMatcher.matches()) {
       final var requestedResource = endpointMatcher.group("resource");

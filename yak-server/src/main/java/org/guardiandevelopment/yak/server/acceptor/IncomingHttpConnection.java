@@ -26,7 +26,7 @@ public final class IncomingHttpConnection implements IncomingConnection {
   private final MemoryPool<HttpRequest> httpRequestMemoryPool;
   private final ByteBuffer readBuffer;
   private final HttpRequest request;
-  private final String correlationId;
+  private final String ipAddress;
 
   private boolean isComplete;
   private boolean hasError;
@@ -38,20 +38,20 @@ public final class IncomingHttpConnection implements IncomingConnection {
   /**
    * Creates a new incoming http connection, taking resources off the memory pools provided on creation.
    *
-   * @param rawConnection                  the raw tcp connection
-   * @param networkBufferPool              the pool to take a network byte buffer from
-   * @param httpRequestMemoryPool          the pool to take a http request from
-   * @param correlationId                  this is used for log correlation
+   * @param rawConnection         the raw tcp connection
+   * @param networkBufferPool     the pool to take a network byte buffer from
+   * @param httpRequestMemoryPool the pool to take a http request from
+   * @param ipAddress             this is used for log correlation
    */
   public IncomingHttpConnection(final SocketChannel rawConnection,
                                 final MemoryPool<ByteBuffer> networkBufferPool,
                                 final MemoryPool<HttpRequest> httpRequestMemoryPool,
-                                final String correlationId) {
+                                final String ipAddress) {
     this.rawConnection = rawConnection;
     this.networkBufferPool = networkBufferPool;
     this.httpRequestMemoryPool = httpRequestMemoryPool;
     this.request = httpRequestMemoryPool.take();
-    this.correlationId = correlationId;
+    this.ipAddress = ipAddress;
     this.isComplete = false;
     this.readBuffer = networkBufferPool.take();
     this.stage = ProcessingStage.REQUEST_URI;
@@ -72,7 +72,7 @@ public final class IncomingHttpConnection implements IncomingConnection {
       return true;
     }
 
-    LOG.trace("[correlationId={},request={}] progressing request", correlationId, request);
+    LOG.trace("[ipAddress={},request={}] progressing request", ipAddress, request);
 
     final var bytesRead = rawConnection.read(readBuffer);
 
@@ -99,7 +99,7 @@ public final class IncomingHttpConnection implements IncomingConnection {
             stage = ProcessingStage.HEADERS;
             processedCommittedPosition = requestUriEndPosition;
 
-            LOG.trace("[correlationId={},request={}] request uri extracted", correlationId, request);
+            LOG.trace("[ipAddress={},request={}] request uri extracted", ipAddress, request);
 
           } else if (stage == ProcessingStage.HEADERS) {
 
@@ -109,11 +109,11 @@ public final class IncomingHttpConnection implements IncomingConnection {
               readBuffer.position(headersEndPosition);
               processedCommittedPosition = headersEndPosition;
 
-              LOG.trace("[correlationId={},request={}] all headers extracted", correlationId, request);
+              LOG.trace("[ipAddress={},request={}] all headers extracted", ipAddress, request);
 
               final var bodyLength = extractMessageBodyLength();
               if (bodyLength == 0) {
-                LOG.debug("[correlationId={},request={}] completed processing incoming request", correlationId, request);
+                LOG.debug("[ipAddress={},request={}] completed processing incoming request", ipAddress, request);
                 isComplete = true;
                 return true;
               }
@@ -123,7 +123,7 @@ public final class IncomingHttpConnection implements IncomingConnection {
               readBuffer.position(headersEndPosition);
               processedCommittedPosition = headersEndPosition;
 
-              LOG.trace("[correlationId={},request={}] header extracted", correlationId, request);
+              LOG.trace("[ipAddress={},request={}] header extracted", ipAddress, request);
             }
           }
         }
@@ -138,7 +138,7 @@ public final class IncomingHttpConnection implements IncomingConnection {
       if (bodySizeBuffered >= messageBodyLength) {
         extractMessageBody(processedCommittedPosition, messageBodyLength);
 
-        LOG.debug("[correlationId={},request={}] completed processing incoming request", correlationId, request);
+        LOG.debug("[ipAddress={},request={}] completed processing incoming request", ipAddress, request);
 
         isComplete = true;
         return true;
