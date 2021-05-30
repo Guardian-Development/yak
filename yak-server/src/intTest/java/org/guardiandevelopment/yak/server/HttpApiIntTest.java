@@ -12,8 +12,8 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.List;
 import org.guardiandevelopment.yak.server.config.YakCacheConfig;
+import org.guardiandevelopment.yak.server.config.YakEndpointConfig;
 import org.guardiandevelopment.yak.server.config.YakMemoryPoolBufferConfig;
-import org.guardiandevelopment.yak.server.config.YakMemoryPoolConfig;
 import org.guardiandevelopment.yak.server.config.YakServerConfig;
 import org.guardiandevelopment.yak.server.config.YakThreadIdleStrategy;
 import org.junit.jupiter.api.AfterEach;
@@ -28,13 +28,17 @@ final class HttpApiIntTest {
   void startServer() {
     final var config = new YakServerConfig()
             .setPort(9911)
+            .setEndpointConfig(new YakEndpointConfig()
+                    .setCache("cache")
+                    .setHealthCheck("health"))
             .setNetworkBufferPool(new YakMemoryPoolBufferConfig()
                     .setPoolSize(50)
                     .setFillOnCreation(true)
                     .setBufferSize(1024))
-            .setHttpRequestMemoryPool(new YakMemoryPoolConfig()
+            .setHttpRequestMemoryPool(new YakMemoryPoolBufferConfig()
                     .setPoolSize(50)
-                    .setFillOnCreation(true))
+                    .setFillOnCreation(true)
+                    .setBufferSize(256))
             .setIncomingCacheRequestPool(new YakMemoryPoolBufferConfig()
                     .setPoolSize(50)
                     .setFillOnCreation(true)
@@ -67,12 +71,53 @@ final class HttpApiIntTest {
   }
 
   @Test
-  void shouldReturnCreatedStatusWhenInsertingKey() throws IOException, InterruptedException {
+  void shouldReturnHealthyForHealthCheck() throws IOException, InterruptedException {
+    // Arrange
+    final var client = HttpClient.newHttpClient();
+
+    final var request = HttpRequest.newBuilder()
+            .uri(URI.create("http://localhost:9911/health"))
+            .header("X-Request-Id", "health-check-test")
+            .version(HttpClient.Version.HTTP_1_1)
+            .timeout(Duration.ofSeconds(10))
+            .build();
+
+    // Act
+    final var response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+    // Assert
+    assertThat(response.statusCode()).isEqualTo(200);
+    assertThat(response.body()).isNullOrEmpty();
+  }
+
+  @Test
+  void shouldReturnUnsupportedOperationWhenNotRequestingViaCacheRoot() throws IOException, InterruptedException {
     // Arrange
     final var client = HttpClient.newHttpClient();
 
     final var request = HttpRequest.newBuilder()
             .uri(URI.create("http://localhost:9911/intTest/key-to-create"))
+            .method("POST", HttpRequest.BodyPublishers.ofString("test-value"))
+            .header("X-Request-Id", "insert-key-test")
+            .version(HttpClient.Version.HTTP_1_1)
+            .timeout(Duration.ofSeconds(10))
+            .build();
+
+    // Act
+    final var response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+    // Assert
+    assertThat(response.statusCode()).isEqualTo(400);
+    assertThat(response.body()).isNullOrEmpty();
+  }
+
+  @Test
+  void shouldReturnCreatedStatusWhenInsertingKey() throws IOException, InterruptedException {
+    // Arrange
+    final var client = HttpClient.newHttpClient();
+
+    final var request = HttpRequest.newBuilder()
+            .uri(URI.create("http://localhost:9911/cache/intTest/key-to-create"))
             .method("POST", HttpRequest.BodyPublishers.ofString("test-value"))
             .header("X-Request-Id", "insert-key-test")
             .version(HttpClient.Version.HTTP_1_1)
@@ -93,7 +138,7 @@ final class HttpApiIntTest {
     final var client = HttpClient.newHttpClient();
 
     final var createRequest = HttpRequest.newBuilder()
-            .uri(URI.create("http://localhost:9911/intTest/key-to-create"))
+            .uri(URI.create("http://localhost:9911/cache/intTest/key-to-create"))
             .method("POST", HttpRequest.BodyPublishers.ofString("test-value"))
             .header("X-Request-Id", "get-existing-key-test")
             .version(HttpClient.Version.HTTP_1_1)
@@ -104,7 +149,7 @@ final class HttpApiIntTest {
     assumeTrue(createResponse.statusCode() == 201);
 
     final var getRequest = HttpRequest.newBuilder()
-            .uri(URI.create("http://localhost:9911/intTest/key-to-create"))
+            .uri(URI.create("http://localhost:9911/cache/intTest/key-to-create"))
             .header("X-Request-Id", "get-existing-key-test")
             .version(HttpClient.Version.HTTP_1_1)
             .timeout(Duration.ofSeconds(10))
@@ -124,7 +169,7 @@ final class HttpApiIntTest {
     final var client = HttpClient.newHttpClient();
 
     final var request = HttpRequest.newBuilder()
-            .uri(URI.create("http://localhost:9911/intTest/non-existing-key"))
+            .uri(URI.create("http://localhost:9911/cache/intTest/non-existing-key"))
             .header("X-Request-Id", "get-non-existing-key-test")
             .version(HttpClient.Version.HTTP_1_1)
             .timeout(Duration.ofSeconds(10))
@@ -144,7 +189,7 @@ final class HttpApiIntTest {
     final var client = HttpClient.newHttpClient();
 
     final var request = HttpRequest.newBuilder()
-            .uri(URI.create("http://localhost:9911/non-existing-cache/key"))
+            .uri(URI.create("http://localhost:9911/cache/non-existing-cache/key"))
             .header("X-Request-Id", "get-non-existing-cache-test")
             .version(HttpClient.Version.HTTP_1_1)
             .timeout(Duration.ofSeconds(10))

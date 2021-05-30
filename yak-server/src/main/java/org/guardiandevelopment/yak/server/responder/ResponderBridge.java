@@ -3,7 +3,7 @@ package org.guardiandevelopment.yak.server.responder;
 /**
  * Provides routing between the cache responses executed, and the responder thread.
  */
-public final class CacheResponseToResponderBridge {
+public class ResponderBridge {
 
   private final ResponderThread responderThread;
 
@@ -12,7 +12,7 @@ public final class CacheResponseToResponderBridge {
    *
    * @param responderThread the responder thread to route responses to
    */
-  public CacheResponseToResponderBridge(final ResponderThread responderThread) {
+  public ResponderBridge(final ResponderThread responderThread) {
 
     this.responderThread = responderThread;
   }
@@ -22,7 +22,7 @@ public final class CacheResponseToResponderBridge {
    *
    * @param response the response from executing the cache request
    */
-  public void acceptCacheResponse(final CacheResponse response) {
+  public void bufferCacheResponse(final CacheResponse response) {
 
     final var responder = response.getResponder();
     switch (response.getType()) {
@@ -41,6 +41,35 @@ public final class CacheResponseToResponderBridge {
       default:
         responder.bufferResponse(Result.INTERNAL_ERROR, null);
     }
+
+    responderThread.bufferResponse(responder);
+  }
+
+  /**
+   * Builds the health check response and buffer it on the responder.
+   *
+   * @param responder the responder to send the response via
+   * @param isHealthy true if the application is healthy, else false
+   */
+  public void bufferHealthCheckResponse(final Responder responder, final boolean isHealthy) {
+
+    if (isHealthy) {
+      responder.bufferResponse(Result.HEALTHY, null);
+    } else {
+      responder.bufferResponse(Result.NOT_HEALTHY, null);
+    }
+
+    responderThread.bufferResponse(responder);
+  }
+
+  /**
+   * Builds the unsupported operation response and buffer it on the responder.
+   *
+   * @param responder the responder to send the response via
+   */
+  public void bufferUnsupportedOperationResponse(final Responder responder) {
+
+    responder.bufferResponse(Result.NOT_SUPPORTED_OPERATION, null);
 
     responderThread.bufferResponse(responder);
   }

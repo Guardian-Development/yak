@@ -3,10 +3,8 @@ package org.guardiandevelopment.yak.server.acceptor;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
-import java.util.UUID;
 import org.guardiandevelopment.yak.server.http.Constants;
 import org.guardiandevelopment.yak.server.pool.MemoryPool;
-import org.guardiandevelopment.yak.server.responder.HttpResponder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,8 +26,7 @@ public final class IncomingHttpConnection implements IncomingConnection {
   private final MemoryPool<HttpRequest> httpRequestMemoryPool;
   private final ByteBuffer readBuffer;
   private final HttpRequest request;
-  private final MemoryPool<IncomingCacheRequest> incomingCacheRequestMemoryPool;
-  private final String correlationId;
+  private final String ipAddress;
 
   private boolean isComplete;
   private boolean hasError;
@@ -41,23 +38,20 @@ public final class IncomingHttpConnection implements IncomingConnection {
   /**
    * Creates a new incoming http connection, taking resources off the memory pools provided on creation.
    *
-   * @param rawConnection                  the raw tcp connection
-   * @param networkBufferPool              the pool to take a network byte buffer from
-   * @param httpRequestMemoryPool          the pool to take a http request from
-   * @param incomingCacheRequestMemoryPool the pool to take an incoming cache request from
-   * @param correlationId                  this is used for log correlation
+   * @param rawConnection         the raw tcp connection
+   * @param networkBufferPool     the pool to take a network byte buffer from
+   * @param httpRequestMemoryPool the pool to take a http request from
+   * @param ipAddress             this is used for log correlation
    */
   public IncomingHttpConnection(final SocketChannel rawConnection,
                                 final MemoryPool<ByteBuffer> networkBufferPool,
                                 final MemoryPool<HttpRequest> httpRequestMemoryPool,
-                                final MemoryPool<IncomingCacheRequest> incomingCacheRequestMemoryPool,
-                                final String correlationId) {
+                                final String ipAddress) {
     this.rawConnection = rawConnection;
     this.networkBufferPool = networkBufferPool;
     this.httpRequestMemoryPool = httpRequestMemoryPool;
     this.request = httpRequestMemoryPool.take();
-    this.incomingCacheRequestMemoryPool = incomingCacheRequestMemoryPool;
-    this.correlationId = correlationId;
+    this.ipAddress = ipAddress;
     this.isComplete = false;
     this.readBuffer = networkBufferPool.take();
     this.stage = ProcessingStage.REQUEST_URI;
@@ -78,7 +72,7 @@ public final class IncomingHttpConnection implements IncomingConnection {
       return true;
     }
 
-    LOG.trace("[correlationId={},request={}] progressing request", correlationId, request);
+    LOG.trace("[ipAddress={},request={}] progressing request", ipAddress, request);
 
     final var bytesRead = rawConnection.read(readBuffer);
 
@@ -105,7 +99,7 @@ public final class IncomingHttpConnection implements IncomingConnection {
             stage = ProcessingStage.HEADERS;
             processedCommittedPosition = requestUriEndPosition;
 
-            LOG.trace("[correlationId={},request={}] request uri extracted", correlationId, request);
+            LOG.trace("[ipAddress={},request={}] request uri extracted", ipAddress, request);
 
           } else if (stage == ProcessingStage.HEADERS) {
 
@@ -115,11 +109,11 @@ public final class IncomingHttpConnection implements IncomingConnection {
               readBuffer.position(headersEndPosition);
               processedCommittedPosition = headersEndPosition;
 
-              LOG.trace("[correlationId={},request={}] all headers extracted", correlationId, request);
+              LOG.trace("[ipAddress={},request={}] all headers extracted", ipAddress, request);
 
               final var bodyLength = extractMessageBodyLength();
               if (bodyLength == 0) {
-                LOG.debug("[correlationId={},request={}] completed processing incoming request", correlationId, request);
+                LOG.debug("[ipAddress={},request={}] completed processing incoming request", ipAddress, request);
                 isComplete = true;
                 return true;
               }
@@ -129,7 +123,7 @@ public final class IncomingHttpConnection implements IncomingConnection {
               readBuffer.position(headersEndPosition);
               processedCommittedPosition = headersEndPosition;
 
-              LOG.trace("[correlationId={},request={}] header extracted", correlationId, request);
+              LOG.trace("[ipAddress={},request={}] header extracted", ipAddress, request);
             }
           }
         }
@@ -144,7 +138,7 @@ public final class IncomingHttpConnection implements IncomingConnection {
       if (bodySizeBuffered >= messageBodyLength) {
         extractMessageBody(processedCommittedPosition, messageBodyLength);
 
-        LOG.debug("[correlationId={},request={}] completed processing incoming request", correlationId, request);
+        LOG.debug("[ipAddress={},request={}] completed processing incoming request", ipAddress, request);
 
         isComplete = true;
         return true;
@@ -201,8 +195,10 @@ public final class IncomingHttpConnection implements IncomingConnection {
   }
 
   private void extractMessageBody(final int startingPosition, final int length) {
-    request.setBodyStartIndex(startingPosition);
-    request.setBodyLength(length);
+    final var tempBuffer = readBuffer.asReadOnlyBuffer();
+    tempBuffer.position(startingPosition);
+    tempBuffer.limit(startingPosition + length);
+    request.copyIntoRequestBody(tempBuffer);
   }
 
   /**
@@ -217,34 +213,10 @@ public final class IncomingHttpConnection implements IncomingConnection {
    * {@inheritDoc}
    */
   @Override
-  public IncomingCacheRequest getRequest() {
+  public HttpRequest getRequest() {
     assert isComplete : "can not get request for incomplete incoming connection";
 
-    final var uriParts = request.getRequestUri().split(Constants.SLASH);
-    final var key = uriParts[uriParts.length - 1];
-    final var cache = uriParts[uriParts.length - 2];
-    final var type = typeFromMethod(request.getMethod());
-
-    readBuffer.position(request.getBodyStartIndex());
-    readBuffer.limit(readBuffer.position() + request.getBodyLength());
-
-    final var cacheRequest = incomingCacheRequestMemoryPool.take();
-    cacheRequest.reset();
-
-
-    var requestId = request.getHeaderOrNull(Constants.HTTP_REQUEST_ID_HEADER);
-    requestId = requestId == null ? UUID.randomUUID().toString() : requestId;
-
-    cacheRequest.setRequestId(requestId)
-            .setResponder(new HttpResponder(rawConnection, networkBufferPool, requestId))
-            .setCacheName(cache)
-            .setKeyName(key)
-            .setType(type)
-            .setContent(readBuffer);
-
-    LOG.debug("[correlationId={},requestId={},cacheRequest={}] returning cache request", correlationId, requestId, cacheRequest);
-
-    return cacheRequest;
+    return request;
   }
 
   /**
@@ -254,17 +226,5 @@ public final class IncomingHttpConnection implements IncomingConnection {
   public void cleanup() {
     networkBufferPool.returnToPool(readBuffer);
     httpRequestMemoryPool.returnToPool(request);
-  }
-
-  private IncomingCacheRequestType typeFromMethod(final String httpMethod) {
-    if (Constants.HTTP_GET_METHOD.equalsIgnoreCase(httpMethod)) {
-      return IncomingCacheRequestType.GET;
-    }
-
-    if (Constants.HTTP_POST_METHOD.equalsIgnoreCase(httpMethod)) {
-      return IncomingCacheRequestType.CREATE;
-    }
-
-    return IncomingCacheRequestType.NOT_SUPPORTED;
   }
 }

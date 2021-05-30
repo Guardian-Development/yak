@@ -13,7 +13,7 @@ import org.guardiandevelopment.yak.core.storage.YakValueStorage;
 import org.guardiandevelopment.yak.server.acceptor.IncomingCacheRequest;
 import org.guardiandevelopment.yak.server.config.YakCacheConfig;
 import org.guardiandevelopment.yak.server.pool.MemoryPool;
-import org.guardiandevelopment.yak.server.responder.CacheResponseToResponderBridge;
+import org.guardiandevelopment.yak.server.responder.ResponderBridge;
 
 
 /**
@@ -44,7 +44,7 @@ public final class CacheInitializer {
    * @param incomingCacheRequestPool the pool to return cache requests to when they have been processed
    * @return cache name to cache wrapper
    */
-  public Map<String, CacheWrapper> init(final CacheResponseToResponderBridge responderBridge,
+  public Map<String, CacheWrapper> init(final ResponderBridge responderBridge,
                                         final MemoryPool<IncomingCacheRequest> incomingCacheRequestPool) {
 
     final var caches = new HashMap<String, CacheWrapper>(config.size(), 1);

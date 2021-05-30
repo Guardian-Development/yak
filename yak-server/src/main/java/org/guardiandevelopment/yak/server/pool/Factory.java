@@ -18,8 +18,8 @@ public final class Factory {
   }
 
   public static MemoryPool<HttpRequest> httpRequestPool(
-          final int poolSize, final boolean fillOnCreation) {
-    return new MemoryPool<>(HttpRequest::new, poolSize, fillOnCreation);
+          final int poolSize, final int bufferSize, final boolean fillOnCreation) {
+    return new MemoryPool<>(() -> new HttpRequest(bufferSize), poolSize, fillOnCreation);
   }
 
   public static MemoryPool<IncomingCacheRequest> incomingCacheRequestPool(

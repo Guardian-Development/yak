@@ -8,7 +8,7 @@ interface IncomingConnection {
 
   boolean hasError();
 
-  IncomingCacheRequest getRequest();
+  HttpRequest getRequest();
 
   void cleanup();
 }

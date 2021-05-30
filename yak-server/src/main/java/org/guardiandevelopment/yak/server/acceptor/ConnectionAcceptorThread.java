@@ -2,13 +2,14 @@ package org.guardiandevelopment.yak.server.acceptor;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.nio.channels.ClosedSelectorException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
+import java.nio.channels.SocketChannel;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.agrona.LangUtil;
 import org.agrona.concurrent.IdleStrategy;
-import org.guardiandevelopment.yak.server.cacheprogression.IncomingConnectionToCacheWrapperBridge;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,7 +22,7 @@ public final class ConnectionAcceptorThread extends Thread {
 
   private final int port;
   private final IncomingConnectionFactory connectionFactory;
-  private final IncomingConnectionToCacheWrapperBridge cacheWrapperBridge;
+  private final HttpRequestProcessor httpRequestProcessor;
   private final IdleStrategy idleStrategy;
   private final AtomicBoolean isRunning;
 
@@ -34,18 +35,17 @@ public final class ConnectionAcceptorThread extends Thread {
    *
    * @param port               the port to listen for connections on
    * @param connectionFactory  the factory to use when wrapping a new accepted connection
-   * @param cacheWrapperBridge the bridge to send incoming requests once read off the wire
    * @param idleStrategy       the strategy to use to limit the thread when there is no work to execute
    */
   public ConnectionAcceptorThread(final int port,
                                   final IncomingConnectionFactory connectionFactory,
-                                  final IncomingConnectionToCacheWrapperBridge cacheWrapperBridge,
+                                  final HttpRequestProcessor httpRequestProcessor,
                                   final IdleStrategy idleStrategy) {
     super("connection-acceptor-thread");
 
     this.port = port;
     this.connectionFactory = connectionFactory;
-    this.cacheWrapperBridge = cacheWrapperBridge;
+    this.httpRequestProcessor = httpRequestProcessor;
     this.idleStrategy = idleStrategy;
     this.isRunning = new AtomicBoolean(false);
   }
@@ -82,7 +82,7 @@ public final class ConnectionAcceptorThread extends Thread {
    */
   @Override
   public void interrupt() {
-    LOG.info("stopping connection acceptor thread due to interrupt on port {}", port);
+    LOG.info("stopping connection acceptor thread on port {} due to interrupt", port);
 
     super.interrupt();
     isRunning.set(false);
@@ -95,7 +95,7 @@ public final class ConnectionAcceptorThread extends Thread {
       LangUtil.rethrowUnchecked(e);
     }
 
-    LOG.info("stopped connection acceptor thread due to interrupt on port {}", port);
+    LOG.info("stopped connection acceptor thread on port {} due to interrupt", port);
   }
 
   /**
@@ -134,7 +134,7 @@ public final class ConnectionAcceptorThread extends Thread {
     int numberAvailable = 0;
     try {
       numberAvailable = acceptingSelector.selectNow();
-    } catch (IOException e) {
+    } catch (IOException | ClosedSelectorException e) {
       LOG.warn("unable to select new connections from selector", e);
     }
 
@@ -191,9 +191,11 @@ public final class ConnectionAcceptorThread extends Thread {
       }
 
       final var request = incomingConnection.getRequest();
+      final var rawConnection = (SocketChannel) connection.channel();
+      httpRequestProcessor.processReadyRequest(request, rawConnection);
+
       incomingConnection.cleanup();
       connection.cancel();
-      cacheWrapperBridge.acceptIncomingConnection(request);
     }
   }
 

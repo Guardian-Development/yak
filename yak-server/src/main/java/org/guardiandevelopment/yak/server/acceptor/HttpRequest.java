@@ -1,11 +1,12 @@
 package org.guardiandevelopment.yak.server.acceptor;
 
+import java.nio.ByteBuffer;
 import java.util.HashMap;
 
 /**
  * Used for storing all information obtained when processing an incoming http request.
  * <p>
- *   built with {@link IncomingHttpConnection}
+ * built with {@link IncomingHttpConnection}
  * </p>
  */
 public final class HttpRequest {
@@ -14,8 +15,11 @@ public final class HttpRequest {
   private String requestUri;
   private String httpVersion;
   private final HashMap<String, String> headers = new HashMap<>();
-  private int bodyStartIndex;
-  private int bodyLength;
+  private final ByteBuffer requestBody;
+
+  public HttpRequest(final int bufferSize) {
+    this.requestBody = ByteBuffer.allocateDirect(bufferSize);
+  }
 
   public String getMethod() {
     return method;
@@ -44,24 +48,6 @@ public final class HttpRequest {
     return this;
   }
 
-  public int getBodyLength() {
-    return bodyLength;
-  }
-
-  public HttpRequest setBodyLength(int bodyLength) {
-    this.bodyLength = bodyLength;
-    return this;
-  }
-
-  public int getBodyStartIndex() {
-    return bodyStartIndex;
-  }
-
-  public HttpRequest setBodyStartIndex(int bodyStartIndex) {
-    this.bodyStartIndex = bodyStartIndex;
-    return this;
-  }
-
   public HttpRequest addHeader(final String key, final String value) {
     headers.put(key, value);
     return this;
@@ -69,6 +55,22 @@ public final class HttpRequest {
 
   public String getHeaderOrNull(final String key) {
     return headers.get(key);
+  }
+
+  /**
+   * Places the content buffer into the request body, then marks the request body ready for read.
+   *
+   * @param content the request content
+   * @return this
+   */
+  public HttpRequest copyIntoRequestBody(final ByteBuffer content) {
+    requestBody.put(content);
+    requestBody.flip();
+    return this;
+  }
+
+  public ByteBuffer getRequestBody() {
+    return requestBody;
   }
 
   /**
@@ -81,8 +83,7 @@ public final class HttpRequest {
     this.requestUri = null;
     this.httpVersion = null;
     this.headers.clear();
-    this.bodyLength = 0;
-    this.bodyStartIndex = 0;
+    this.requestBody.clear();
     return this;
   }
 
@@ -93,6 +94,6 @@ public final class HttpRequest {
             + ", requestUri='" + requestUri + '\''
             + ", httpVersion='" + httpVersion + '\''
             + ", headers=" + headers
-            + '}';
+            + ", requestBody=" + requestBody + '}';
   }
 }
