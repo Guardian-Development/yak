@@ -9,7 +9,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import org.agrona.LangUtil;
 import org.agrona.concurrent.IdleStrategy;
-import org.agrona.concurrent.OneToOneConcurrentArrayQueue;
+import org.agrona.concurrent.ManyToOneConcurrentArrayQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,7 +21,7 @@ public final class ResponderThread extends Thread {
   private static final Logger LOG = LoggerFactory.getLogger(ResponderThread.class);
 
   private final AtomicBoolean isRunning;
-  private final OneToOneConcurrentArrayQueue<Responder> outgoingResponses;
+  private final ManyToOneConcurrentArrayQueue<Responder> outgoingResponses;
   private final IdleStrategy idleStrategy;
   private final ResponderToSelectorRegistration registerConnectionWithSelector;
   private Selector respondingSelector;
@@ -36,7 +36,7 @@ public final class ResponderThread extends Thread {
     this.idleStrategy = idleStrategy;
 
     this.isRunning = new AtomicBoolean(false);
-    this.outgoingResponses = new OneToOneConcurrentArrayQueue<>(100);
+    this.outgoingResponses = new ManyToOneConcurrentArrayQueue<>(100);
     this.registerConnectionWithSelector = new ResponderToSelectorRegistration();
   }
 

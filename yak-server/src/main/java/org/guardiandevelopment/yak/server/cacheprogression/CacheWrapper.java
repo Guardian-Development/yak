@@ -7,7 +7,7 @@ import org.guardiandevelopment.yak.core.YakCache;
 import org.guardiandevelopment.yak.server.acceptor.IncomingCacheRequest;
 import org.guardiandevelopment.yak.server.pool.MemoryPool;
 import org.guardiandevelopment.yak.server.responder.CacheResponse;
-import org.guardiandevelopment.yak.server.responder.CacheResponseToResponderBridge;
+import org.guardiandevelopment.yak.server.responder.ResponderBridge;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,7 +23,7 @@ public final class CacheWrapper {
 
   private final String cacheName;
   private final YakCache<String, ByteBuffer> cache;
-  private final CacheResponseToResponderBridge responderBridge;
+  private final ResponderBridge responderBridge;
   private final MemoryPool<IncomingCacheRequest> incomingCacheRequestPool;
   private final OneToOneConcurrentArrayQueue<IncomingCacheRequest> incomingCacheRequests;
   private final CacheRequestExecutor cacheRequestExecutor;
@@ -38,7 +38,7 @@ public final class CacheWrapper {
    */
   public CacheWrapper(final String cacheName,
                       final YakCache<String, ByteBuffer> cache,
-                      final CacheResponseToResponderBridge responderBridge,
+                      final ResponderBridge responderBridge,
                       final MemoryPool<IncomingCacheRequest> incomingCacheRequestPool) {
     this.cacheName = cacheName;
 
@@ -102,7 +102,7 @@ public final class CacheWrapper {
         }
       }
 
-      responderBridge.acceptCacheResponse(cacheResponse);
+      responderBridge.bufferCacheResponse(cacheResponse);
       incomingCacheRequestPool.returnToPool(request);
     }
 

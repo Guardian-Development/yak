@@ -11,7 +11,11 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.List;
-import org.guardiandevelopment.yak.server.config.*;
+import org.guardiandevelopment.yak.server.config.YakCacheConfig;
+import org.guardiandevelopment.yak.server.config.YakEndpointConfig;
+import org.guardiandevelopment.yak.server.config.YakMemoryPoolBufferConfig;
+import org.guardiandevelopment.yak.server.config.YakServerConfig;
+import org.guardiandevelopment.yak.server.config.YakThreadIdleStrategy;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,8 +29,8 @@ final class HttpApiIntTest {
     final var config = new YakServerConfig()
             .setPort(9911)
             .setEndpointConfig(new YakEndpointConfig()
-                    .setCache("/cache")
-                    .setHealthCheck("/health"))
+                    .setCache("cache")
+                    .setHealthCheck("health"))
             .setNetworkBufferPool(new YakMemoryPoolBufferConfig()
                     .setPoolSize(50)
                     .setFillOnCreation(true)
@@ -64,6 +68,47 @@ final class HttpApiIntTest {
   @AfterEach
   void stopServer() {
     yakServer.stop();
+  }
+
+  @Test
+  void shouldReturnHealthyForHealthCheck() throws IOException, InterruptedException {
+    // Arrange
+    final var client = HttpClient.newHttpClient();
+
+    final var request = HttpRequest.newBuilder()
+            .uri(URI.create("http://localhost:9911/health"))
+            .header("X-Request-Id", "health-check-test")
+            .version(HttpClient.Version.HTTP_1_1)
+            .timeout(Duration.ofSeconds(10))
+            .build();
+
+    // Act
+    final var response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+    // Assert
+    assertThat(response.statusCode()).isEqualTo(200);
+    assertThat(response.body()).isNullOrEmpty();
+  }
+
+  @Test
+  void shouldReturnUnsupportedOperationWhenNotRequestingViaCacheRoot() throws IOException, InterruptedException {
+    // Arrange
+    final var client = HttpClient.newHttpClient();
+
+    final var request = HttpRequest.newBuilder()
+            .uri(URI.create("http://localhost:9911/intTest/key-to-create"))
+            .method("POST", HttpRequest.BodyPublishers.ofString("test-value"))
+            .header("X-Request-Id", "insert-key-test")
+            .version(HttpClient.Version.HTTP_1_1)
+            .timeout(Duration.ofSeconds(10))
+            .build();
+
+    // Act
+    final var response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+    // Assert
+    assertThat(response.statusCode()).isEqualTo(400);
+    assertThat(response.body()).isNullOrEmpty();
   }
 
   @Test

@@ -6,7 +6,7 @@ import java.util.HashMap;
 /**
  * Used for storing all information obtained when processing an incoming http request.
  * <p>
- *   built with {@link IncomingHttpConnection}
+ * built with {@link IncomingHttpConnection}
  * </p>
  */
 public final class HttpRequest {
@@ -57,6 +57,12 @@ public final class HttpRequest {
     return headers.get(key);
   }
 
+  /**
+   * Places the content buffer into the request body, then marks the request body ready for read.
+   *
+   * @param content the request content
+   * @return this
+   */
   public HttpRequest copyIntoRequestBody(final ByteBuffer content) {
     requestBody.put(content);
     requestBody.flip();
@@ -83,12 +89,11 @@ public final class HttpRequest {
 
   @Override
   public String toString() {
-    return "HttpRequest{" +
-            "method='" + method + '\'' +
-            ", requestUri='" + requestUri + '\'' +
-            ", httpVersion='" + httpVersion + '\'' +
-            ", headers=" + headers +
-            ", requestBody=" + requestBody +
-            '}';
+    return "HttpRequest{"
+            + "method='" + method + '\''
+            + ", requestUri='" + requestUri + '\''
+            + ", httpVersion='" + httpVersion + '\''
+            + ", headers=" + headers
+            + ", requestBody=" + requestBody + '}';
   }
 }

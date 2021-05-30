@@ -13,7 +13,7 @@ import org.guardiandevelopment.yak.server.config.YakCacheConfig;
 import org.guardiandevelopment.yak.server.config.YakConfigFromJsonBuilder;
 import org.guardiandevelopment.yak.server.config.YakServerConfig;
 import org.guardiandevelopment.yak.server.pool.Factory;
-import org.guardiandevelopment.yak.server.responder.CacheResponseToResponderBridge;
+import org.guardiandevelopment.yak.server.responder.ResponderBridge;
 import org.guardiandevelopment.yak.server.responder.ResponderThread;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -70,15 +70,16 @@ public final class YakServerRunner {
 
     responderThread = new ResponderThread(threadIdleStrategy);
 
-    final var cacheResponseBridge = new CacheResponseToResponderBridge(responderThread);
+    final var responseBridge = new ResponderBridge(responderThread);
     final var cacheInit = new CacheInitializer(config.getCaches());
-    final var cacheNameToCache = cacheInit.init(cacheResponseBridge, incomingCacheRequestMemoryPool);
+    final var cacheNameToCache = cacheInit.init(responseBridge, incomingCacheRequestMemoryPool);
 
     LOG.info("caches available on server: {}", config.getCaches().stream().map(YakCacheConfig::getName).collect(Collectors.toList()));
 
     final var connectionFactory = new IncomingConnectionFactory(networkBufferPool, httpRequestMemoryPool);
     final var connectionCacheBridge = new IncomingConnectionToCacheWrapperBridge(cacheNameToCache);
-    final var httpRequestProcessor = new HttpRequestProcessor(connectionCacheBridge, networkBufferPool, incomingCacheRequestMemoryPool);
+    final var httpRequestProcessor = new HttpRequestProcessor(
+            config.getEndpointConfig(), connectionCacheBridge, responseBridge, networkBufferPool, incomingCacheRequestMemoryPool);
 
     acceptorThread = new ConnectionAcceptorThread(config.getPort(), connectionFactory, httpRequestProcessor, threadIdleStrategy);
     cacheProgressionThread = new CacheProgressionThread(cacheNameToCache.values(), threadIdleStrategy);

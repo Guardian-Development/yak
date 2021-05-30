@@ -8,7 +8,10 @@ public enum Result {
   KEY_NOT_FOUND("404", "Not Found Key"),
   CACHE_NOT_FOUND("404", "Not Found Cache"),
   KEY_CREATED("201", "Created Key"),
-  INTERNAL_ERROR("500", "Internal Server Error");
+  INTERNAL_ERROR("500", "Internal Server Error"),
+  HEALTHY("200", "Service Healthy"),
+  NOT_HEALTHY("500", "Not Healthy Service"),
+  NOT_SUPPORTED_OPERATION("400", "Not Supported Operation");
 
   private final String code;
   private final String reasonPhrase;

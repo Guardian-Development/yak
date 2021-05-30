@@ -1,8 +1,8 @@
 {
   "port": 9000,
   "endpointConfig": {
-    "healthCheck": "/health",
-    "cache": "/cache"
+    "healthCheck": "health",
+    "cache": "cache"
   },
   "networkBufferPool": {
     "poolSize": 50,

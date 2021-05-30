@@ -13,6 +13,9 @@ class YakConfigFromJsonBuilderTest {
     // Arrange
     final var expectedConfig = new YakServerConfig()
             .setPort(9000)
+            .setEndpointConfig(new YakEndpointConfig()
+                    .setHealthCheck("health")
+                    .setCache("cache"))
             .setNetworkBufferPool(new YakMemoryPoolBufferConfig()
                     .setPoolSize(50)
                     .setFillOnCreation(true)
@@ -20,7 +23,7 @@ class YakConfigFromJsonBuilderTest {
             .setHttpRequestMemoryPool(new YakMemoryPoolBufferConfig()
                     .setPoolSize(50)
                     .setFillOnCreation(true)
-                    .setBufferSize(256))
+                    .setBufferSize(128))
             .setIncomingCacheRequestPool(new YakMemoryPoolBufferConfig()
                     .setPoolSize(50)
                     .setFillOnCreation(true)
