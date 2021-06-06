@@ -1,8 +1,10 @@
 package org.guardiandevelopment.yak.server.metrics;
 
+import io.prometheus.client.CollectorRegistry;
 import io.prometheus.client.exporter.HTTPServer;
 import io.prometheus.client.hotspot.DefaultExports;
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import org.agrona.LangUtil;
 import org.guardiandevelopment.yak.server.config.YakMetricsConfig;
 import org.slf4j.Logger;
@@ -16,10 +18,23 @@ public final class Metrics {
   private static final Logger LOG = LoggerFactory.getLogger(Metrics.class);
 
   private final YakMetricsConfig config;
+  private final CollectorRegistry registry;
+  private final ThreadMetrics threadMetrics;
+  private final CacheMetrics cacheMetrics;
+
   private HTTPServer httpServer;
 
+  /**
+   * Creates a metrics configuration from the provided config.
+   *
+   * @param config the config to expose metrics over
+   */
   public Metrics(final YakMetricsConfig config) {
+
     this.config = config;
+    this.registry = new CollectorRegistry();
+    this.threadMetrics = new ThreadMetrics(config, registry);
+    this.cacheMetrics = new CacheMetrics(config, registry);
   }
 
   /**
@@ -34,10 +49,10 @@ public final class Metrics {
       return;
     }
 
-    DefaultExports.initialize();
+    DefaultExports.register(registry);
 
     try {
-      httpServer = new HTTPServer(config.getPort());
+      httpServer = new HTTPServer(new InetSocketAddress(config.getPort()), registry);
     } catch (IOException e) {
       LOG.error("failed to initalise metrics for server", e);
       LangUtil.rethrowUnchecked(e);
@@ -57,5 +72,13 @@ public final class Metrics {
 
       LOG.info("stopped server metrics");
     }
+  }
+
+  public ThreadMetrics getThreadHeartbeatMetrics() {
+    return threadMetrics;
+  }
+
+  public CacheMetrics getCacheMetrics() {
+    return cacheMetrics;
   }
 }

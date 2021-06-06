@@ -34,6 +34,8 @@ public final class HttpResponder implements Responder {
     this.networkBufferPool = networkBufferPool;
     this.writeBuffer = networkBufferPool.take();
     this.requestId = requestId;
+
+    this.writeBuffer.clear();
   }
 
   /**

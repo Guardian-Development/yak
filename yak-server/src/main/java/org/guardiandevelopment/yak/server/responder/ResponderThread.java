@@ -10,6 +10,7 @@ import java.util.function.Consumer;
 import org.agrona.LangUtil;
 import org.agrona.concurrent.IdleStrategy;
 import org.agrona.concurrent.ManyToOneConcurrentArrayQueue;
+import org.guardiandevelopment.yak.server.metrics.ThreadMetrics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,17 +24,21 @@ public final class ResponderThread extends Thread {
   private final AtomicBoolean isRunning;
   private final ManyToOneConcurrentArrayQueue<Responder> outgoingResponses;
   private final IdleStrategy idleStrategy;
+  private final ThreadMetrics threadMetrics;
   private final ResponderToSelectorRegistration registerConnectionWithSelector;
   private Selector respondingSelector;
 
   /**
    * Creates the responder thread.
    *
-   * @param idleStrategy the strategy to use to limit the thread when there is no work to execute
+   * @param idleStrategy  the strategy to use to limit the thread when there is no work to execute
+   * @param threadMetrics metrics for observing thread health
    */
-  public ResponderThread(final IdleStrategy idleStrategy) {
+  public ResponderThread(final IdleStrategy idleStrategy,
+                         final ThreadMetrics threadMetrics) {
     super("responder-thread");
     this.idleStrategy = idleStrategy;
+    this.threadMetrics = threadMetrics;
 
     this.isRunning = new AtomicBoolean(false);
     this.outgoingResponses = new ManyToOneConcurrentArrayQueue<>(100);
@@ -106,6 +111,7 @@ public final class ResponderThread extends Thread {
   @Override
   public void run() {
     while (isRunning.get()) {
+      threadMetrics.incHeartbeat();
       idleStrategy.idle(tick());
     }
   }

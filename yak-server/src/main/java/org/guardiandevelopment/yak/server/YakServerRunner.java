@@ -72,10 +72,10 @@ public final class YakServerRunner {
             config.getThreadIdleStrategy().getMinParkPeriodNs(),
             config.getThreadIdleStrategy().getMaxParkPeriodNs());
 
-    responderThread = new ResponderThread(threadIdleStrategy);
+    responderThread = new ResponderThread(threadIdleStrategy, metrics.getThreadHeartbeatMetrics());
 
     final var responseBridge = new ResponderBridge(responderThread);
-    final var cacheInit = new CacheInitializer(config.getCaches());
+    final var cacheInit = new CacheInitializer(config.getCaches(), metrics.getCacheMetrics());
     final var cacheNameToCache = cacheInit.init(responseBridge, incomingCacheRequestMemoryPool);
 
     LOG.info("caches available on server: {}", config.getCaches().stream().map(YakCacheConfig::getName).collect(Collectors.toList()));
@@ -85,8 +85,17 @@ public final class YakServerRunner {
     final var httpRequestProcessor = new HttpRequestProcessor(
             config.getEndpointConfig(), connectionCacheBridge, responseBridge, networkBufferPool, incomingCacheRequestMemoryPool);
 
-    acceptorThread = new ConnectionAcceptorThread(config.getPort(), connectionFactory, httpRequestProcessor, threadIdleStrategy);
-    cacheProgressionThread = new CacheProgressionThread(cacheNameToCache.values(), threadIdleStrategy);
+    acceptorThread = new ConnectionAcceptorThread(
+            config.getPort(),
+            connectionFactory,
+            httpRequestProcessor,
+            threadIdleStrategy,
+            metrics.getThreadHeartbeatMetrics());
+
+    cacheProgressionThread = new CacheProgressionThread(
+            cacheNameToCache.values(),
+            threadIdleStrategy,
+            metrics.getThreadHeartbeatMetrics());
 
     LOG.info("initialised server from config");
 

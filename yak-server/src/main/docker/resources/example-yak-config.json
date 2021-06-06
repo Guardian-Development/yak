@@ -20,10 +20,10 @@
     "bufferSize": 256
   },
   "threadIdleStrategy": {
-    "maxSpins": 100,
+    "maxSpins": 1000,
     "maxYields" : 10000,
-    "minParkPeriodNs": 10,
-    "maxParkPeriodNs" : 10000
+    "minParkPeriodNs": 100000,
+    "maxParkPeriodNs" : 1000000
   },
   "metricsConfig": {
     "enabled": true,

@@ -1,5 +1,7 @@
 package org.guardiandevelopment.yak.core;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import org.guardiandevelopment.yak.core.events.YakEventListener;
@@ -21,8 +23,8 @@ public final class YakCacheBuilder<T, Q> {
   private int fixedValueSize = 256;
   private YakValueStorage storage = YakValueStorage.DIRECT_MEMORY_STORAGE;
   private YakEvictionStrategy<T> strategy = YakEvictionStrategy.leastRecentlyUsed();
-
   private YakValueSerializer<Q> valueSerializer;
+  private List<YakEventListener<T>> eventListeners = new ArrayList<>();
 
   /**
    * New builder for creating a Yak Cache.
@@ -104,6 +106,18 @@ public final class YakCacheBuilder<T, Q> {
   }
 
   /**
+   * Register an event listener to be notified of events within the cache.
+   *
+   * @param listener the listener
+   * @return self
+   */
+  public YakCacheBuilder<T, Q> eventListener(final YakEventListener<T> listener) {
+
+    this.eventListeners.add(listener);
+    return this;
+  }
+
+  /**
    * The name of the cache.
    * <p>
    * By default, this has the format cache-UUID. This name is used within all logs, when enabled.
@@ -130,8 +144,9 @@ public final class YakCacheBuilder<T, Q> {
     storage.init(maximumKeys, fixedValueSize);
     strategy.init(maximumKeys);
 
-    final var eventListeners = List.<YakEventListener<T>>of(strategy);
+    eventListeners.add(strategy);
+    final var unmodifiableListeners = Collections.unmodifiableList(eventListeners);
 
-    return new YakCache<>(name, maximumKeys, valueSerializer, storage, strategy, eventListeners);
+    return new YakCache<>(name, maximumKeys, valueSerializer, storage, strategy, unmodifiableListeners);
   }
 }
