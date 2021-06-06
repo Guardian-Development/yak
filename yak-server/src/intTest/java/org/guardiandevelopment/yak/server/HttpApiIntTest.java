@@ -14,6 +14,7 @@ import java.util.List;
 import org.guardiandevelopment.yak.server.config.YakCacheConfig;
 import org.guardiandevelopment.yak.server.config.YakEndpointConfig;
 import org.guardiandevelopment.yak.server.config.YakMemoryPoolBufferConfig;
+import org.guardiandevelopment.yak.server.config.YakMetricsConfig;
 import org.guardiandevelopment.yak.server.config.YakServerConfig;
 import org.guardiandevelopment.yak.server.config.YakThreadIdleStrategy;
 import org.junit.jupiter.api.AfterEach;
@@ -48,6 +49,9 @@ final class HttpApiIntTest {
                     .setMaxYields(10)
                     .setMinParkPeriodNs(10)
                     .setMaxParkPeriodNs(100))
+            .setMetricsConfig(new YakMetricsConfig()
+                    .setPort(9001)
+                    .setEnabled(true))
             .setCaches(List.of(new YakCacheConfig()
                     .setName("intTest")
                     .setFixedValueSize(50)

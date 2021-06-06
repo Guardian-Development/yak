@@ -33,9 +33,10 @@ public final class ConnectionAcceptorThread extends Thread {
   /**
    * Initialise the connection acceptor thread.
    *
-   * @param port               the port to listen for connections on
-   * @param connectionFactory  the factory to use when wrapping a new accepted connection
-   * @param idleStrategy       the strategy to use to limit the thread when there is no work to execute
+   * @param port                 the port to listen for connections on
+   * @param connectionFactory    the factory to use when wrapping a new accepted connection
+   * @param httpRequestProcessor used for routing the http connection to the correct internal thread
+   * @param idleStrategy         the strategy to use to limit the thread when there is no work to execute
    */
   public ConnectionAcceptorThread(final int port,
                                   final IncomingConnectionFactory connectionFactory,

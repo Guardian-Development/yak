@@ -25,6 +25,10 @@
     "minParkPeriodNs": 10,
     "maxParkPeriodNs" : 10000
   },
+  "metricsConfig": {
+    "enabled": true,
+    "port": 9001
+  },
   "caches": [
     {
       "name": "yak",

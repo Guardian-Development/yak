@@ -12,6 +12,7 @@ import org.guardiandevelopment.yak.server.cacheprogression.IncomingConnectionToC
 import org.guardiandevelopment.yak.server.config.YakCacheConfig;
 import org.guardiandevelopment.yak.server.config.YakConfigFromJsonBuilder;
 import org.guardiandevelopment.yak.server.config.YakServerConfig;
+import org.guardiandevelopment.yak.server.metrics.Metrics;
 import org.guardiandevelopment.yak.server.pool.Factory;
 import org.guardiandevelopment.yak.server.responder.ResponderBridge;
 import org.guardiandevelopment.yak.server.responder.ResponderThread;
@@ -30,6 +31,7 @@ public final class YakServerRunner {
   private ConnectionAcceptorThread acceptorThread;
   private CacheProgressionThread cacheProgressionThread;
   private ResponderThread responderThread;
+  private Metrics metrics;
 
   /**
    * Initialise the server to be ran with the passed in config.
@@ -48,6 +50,8 @@ public final class YakServerRunner {
   public boolean init() {
 
     LOG.info("initialising server from config");
+
+    metrics = new Metrics(config.getMetricsConfig());
 
     final var networkBufferPool = Factory.networkBufferPool(
             config.getNetworkBufferPool().getPoolSize(),
@@ -95,6 +99,7 @@ public final class YakServerRunner {
   public void start() {
     LOG.info("starting server");
 
+    metrics.start();
     responderThread.start();
     cacheProgressionThread.start();
     acceptorThread.start();
@@ -124,6 +129,7 @@ public final class YakServerRunner {
     acceptorThread.interrupt();
     cacheProgressionThread.interrupt();
     responderThread.interrupt();
+    metrics.stop();
 
     LOG.info("server stopped");
   }
