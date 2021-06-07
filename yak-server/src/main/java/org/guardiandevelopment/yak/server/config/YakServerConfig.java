@@ -14,6 +14,7 @@ public final class YakServerConfig {
   private YakMemoryPoolBufferConfig httpRequestMemoryPool;
   private YakMemoryPoolBufferConfig incomingCacheRequestPool;
   private YakThreadIdleStrategy threadIdleStrategy;
+  private YakMetricsConfig metricsConfig;
 
   public int getPort() {
     return port;
@@ -75,6 +76,15 @@ public final class YakServerConfig {
 
   public YakServerConfig setThreadIdleStrategy(YakThreadIdleStrategy threadIdleStrategy) {
     this.threadIdleStrategy = threadIdleStrategy;
+    return this;
+  }
+
+  public YakMetricsConfig getMetricsConfig() {
+    return metricsConfig;
+  }
+
+  public YakServerConfig setMetricsConfig(YakMetricsConfig metricsConfig) {
+    this.metricsConfig = metricsConfig;
     return this;
   }
 }

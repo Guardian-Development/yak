@@ -12,6 +12,7 @@ import org.guardiandevelopment.yak.server.cacheprogression.IncomingConnectionToC
 import org.guardiandevelopment.yak.server.config.YakCacheConfig;
 import org.guardiandevelopment.yak.server.config.YakConfigFromJsonBuilder;
 import org.guardiandevelopment.yak.server.config.YakServerConfig;
+import org.guardiandevelopment.yak.server.metrics.Metrics;
 import org.guardiandevelopment.yak.server.pool.Factory;
 import org.guardiandevelopment.yak.server.responder.ResponderBridge;
 import org.guardiandevelopment.yak.server.responder.ResponderThread;
@@ -30,6 +31,7 @@ public final class YakServerRunner {
   private ConnectionAcceptorThread acceptorThread;
   private CacheProgressionThread cacheProgressionThread;
   private ResponderThread responderThread;
+  private Metrics metrics;
 
   /**
    * Initialise the server to be ran with the passed in config.
@@ -48,6 +50,8 @@ public final class YakServerRunner {
   public boolean init() {
 
     LOG.info("initialising server from config");
+
+    metrics = new Metrics(config.getMetricsConfig());
 
     final var networkBufferPool = Factory.networkBufferPool(
             config.getNetworkBufferPool().getPoolSize(),
@@ -68,10 +72,10 @@ public final class YakServerRunner {
             config.getThreadIdleStrategy().getMinParkPeriodNs(),
             config.getThreadIdleStrategy().getMaxParkPeriodNs());
 
-    responderThread = new ResponderThread(threadIdleStrategy);
+    responderThread = new ResponderThread(threadIdleStrategy, metrics.getThreadHeartbeatMetrics());
 
     final var responseBridge = new ResponderBridge(responderThread);
-    final var cacheInit = new CacheInitializer(config.getCaches());
+    final var cacheInit = new CacheInitializer(config.getCaches(), metrics.getCacheMetrics());
     final var cacheNameToCache = cacheInit.init(responseBridge, incomingCacheRequestMemoryPool);
 
     LOG.info("caches available on server: {}", config.getCaches().stream().map(YakCacheConfig::getName).collect(Collectors.toList()));
@@ -81,8 +85,17 @@ public final class YakServerRunner {
     final var httpRequestProcessor = new HttpRequestProcessor(
             config.getEndpointConfig(), connectionCacheBridge, responseBridge, networkBufferPool, incomingCacheRequestMemoryPool);
 
-    acceptorThread = new ConnectionAcceptorThread(config.getPort(), connectionFactory, httpRequestProcessor, threadIdleStrategy);
-    cacheProgressionThread = new CacheProgressionThread(cacheNameToCache.values(), threadIdleStrategy);
+    acceptorThread = new ConnectionAcceptorThread(
+            config.getPort(),
+            connectionFactory,
+            httpRequestProcessor,
+            threadIdleStrategy,
+            metrics.getThreadHeartbeatMetrics());
+
+    cacheProgressionThread = new CacheProgressionThread(
+            cacheNameToCache.values(),
+            threadIdleStrategy,
+            metrics.getThreadHeartbeatMetrics());
 
     LOG.info("initialised server from config");
 
@@ -95,6 +108,7 @@ public final class YakServerRunner {
   public void start() {
     LOG.info("starting server");
 
+    metrics.start();
     responderThread.start();
     cacheProgressionThread.start();
     acceptorThread.start();
@@ -124,6 +138,7 @@ public final class YakServerRunner {
     acceptorThread.interrupt();
     cacheProgressionThread.interrupt();
     responderThread.interrupt();
+    metrics.stop();
 
     LOG.info("server stopped");
   }

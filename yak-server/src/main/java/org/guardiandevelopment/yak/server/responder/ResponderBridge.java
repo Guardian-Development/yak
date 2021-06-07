@@ -20,7 +20,7 @@ public class ResponderBridge {
   /**
    * Builds the response and buffer it on the responder.
    *
-   * @param response the response from executing the cache request
+   * @param response  the response from executing the cache request
    */
   public void bufferCacheResponse(final CacheResponse response) {
 

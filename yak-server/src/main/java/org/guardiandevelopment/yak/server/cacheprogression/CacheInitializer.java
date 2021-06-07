@@ -7,11 +7,13 @@ import java.util.Map;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.guardiandevelopment.yak.core.YakCache;
 import org.guardiandevelopment.yak.core.YakCacheBuilder;
+import org.guardiandevelopment.yak.core.events.YakEventListener;
 import org.guardiandevelopment.yak.core.eviction.YakEvictionStrategy;
 import org.guardiandevelopment.yak.core.serialization.YakValueSerializer;
 import org.guardiandevelopment.yak.core.storage.YakValueStorage;
 import org.guardiandevelopment.yak.server.acceptor.IncomingCacheRequest;
 import org.guardiandevelopment.yak.server.config.YakCacheConfig;
+import org.guardiandevelopment.yak.server.metrics.CacheMetrics;
 import org.guardiandevelopment.yak.server.pool.MemoryPool;
 import org.guardiandevelopment.yak.server.responder.ResponderBridge;
 
@@ -28,9 +30,11 @@ public final class CacheInitializer {
   public static String NULL_CACHE_RESPONDER_KEY = "null_cache_wrapper";
 
   private final List<YakCacheConfig> config;
+  private final CacheMetrics cacheMetrics;
 
-  public CacheInitializer(final List<YakCacheConfig> config) {
+  public CacheInitializer(final List<YakCacheConfig> config, final CacheMetrics cacheMetrics) {
     this.config = config;
+    this.cacheMetrics = cacheMetrics;
   }
 
   /**
@@ -67,6 +71,7 @@ public final class CacheInitializer {
     builder.evictionStrategy(YakEvictionStrategy.leastRecentlyUsed());
     builder.valueStorageMechanism(YakValueStorage.DIRECT_MEMORY_STORAGE);
     builder.name(cache.getName());
+    builder.eventListener((event, key, value) -> cacheMetrics.incCacheResponse(cache.getName(), key, event));
     builder.valueSerializer(new YakValueSerializer<>() {
 
       private final ByteBuffer deserializeIntoBuffer = ByteBuffer.allocateDirect(cache.getFixedValueSize());

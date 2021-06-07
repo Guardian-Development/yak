@@ -10,6 +10,7 @@ import java.nio.channels.SocketChannel;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.agrona.LangUtil;
 import org.agrona.concurrent.IdleStrategy;
+import org.guardiandevelopment.yak.server.metrics.ThreadMetrics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,6 +25,7 @@ public final class ConnectionAcceptorThread extends Thread {
   private final IncomingConnectionFactory connectionFactory;
   private final HttpRequestProcessor httpRequestProcessor;
   private final IdleStrategy idleStrategy;
+  private final ThreadMetrics threadMetrics;
   private final AtomicBoolean isRunning;
 
   private ServerSocketChannel serverSocketChannel;
@@ -33,20 +35,24 @@ public final class ConnectionAcceptorThread extends Thread {
   /**
    * Initialise the connection acceptor thread.
    *
-   * @param port               the port to listen for connections on
-   * @param connectionFactory  the factory to use when wrapping a new accepted connection
-   * @param idleStrategy       the strategy to use to limit the thread when there is no work to execute
+   * @param port                 the port to listen for connections on
+   * @param connectionFactory    the factory to use when wrapping a new accepted connection
+   * @param httpRequestProcessor used for routing the http connection to the correct internal thread
+   * @param idleStrategy         the strategy to use to limit the thread when there is no work to execute
+   * @param threadMetrics        metrics for observing thread health
    */
   public ConnectionAcceptorThread(final int port,
                                   final IncomingConnectionFactory connectionFactory,
                                   final HttpRequestProcessor httpRequestProcessor,
-                                  final IdleStrategy idleStrategy) {
+                                  final IdleStrategy idleStrategy,
+                                  final ThreadMetrics threadMetrics) {
     super("connection-acceptor-thread");
 
     this.port = port;
     this.connectionFactory = connectionFactory;
     this.httpRequestProcessor = httpRequestProcessor;
     this.idleStrategy = idleStrategy;
+    this.threadMetrics = threadMetrics;
     this.isRunning = new AtomicBoolean(false);
   }
 
@@ -123,6 +129,7 @@ public final class ConnectionAcceptorThread extends Thread {
   @Override
   public void run() {
     while (isRunning.get()) {
+      threadMetrics.incHeartbeat();
       idleStrategy.idle(tick());
     }
   }
