@@ -83,7 +83,11 @@ public final class CacheProgressionThread extends Thread {
       int connectionsServed = 0;
 
       for (final var cache : caches) {
-        connectionsServed += cache.progressIncomingRequests();
+        try {
+          connectionsServed += cache.progressIncomingRequests();
+        } catch (Exception e) {
+          LOG.error("failed to progress cache", e);
+        }
       }
 
       idleStrategy.idle(connectionsServed);

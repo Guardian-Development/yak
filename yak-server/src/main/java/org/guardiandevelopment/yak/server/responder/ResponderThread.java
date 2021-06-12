@@ -138,7 +138,7 @@ public final class ResponderThread extends Thread {
       final var connection = connectionIterator.next();
       try {
         progressReadyConnection(connection);
-      } catch (IOException e) {
+      } catch (Exception e) {
         LOG.trace("failed to progress connection", e);
         closeConnection(connection);
       }
