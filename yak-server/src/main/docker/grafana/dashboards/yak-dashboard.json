@@ -172,7 +172,7 @@
       "targets": [
         {
           "exemplar": true,
-          "expr": "sum(rate(thread_heartbeat_total[1m]) * 60) by (thread_name)",
+          "expr": "sum(rate(thread_heartbeat_total[$__rate_interval])) by (thread_name)",
           "interval": "",
           "legendFormat": "{{ thread_name }}",
           "queryType": "randomWalk",
@@ -277,7 +277,9 @@
         }
       ],
       "thresholds": [],
+      "timeFrom": null,
       "timeRegions": [],
+      "timeShift": null,
       "title": "Cache Hits",
       "tooltip": {
         "shared": true,
@@ -324,7 +326,7 @@
     "list": []
   },
   "time": {
-    "from": "now-5m",
+    "from": "now-15m",
     "to": "now"
   },
   "timepicker": {},

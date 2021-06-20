@@ -1,5 +1,4 @@
 plugins {
-    id "me.champeau.jmh" version "0.6.2"
     id "yak.java-conventions"
     id "yak.java-integration-tests"
     id "yak.docker-conventions"

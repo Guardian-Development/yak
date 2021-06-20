@@ -52,13 +52,23 @@ task publishDocker(type: Exec) {
 }
 
 // turn app off, including volumes
-task composeDown(type: Exec) {
+task composeDownVolumes(type: Exec) {
     group 'docker'
     workingDir "$projectDir"
     environment("SERVICE_GROUP", project.group)
     environment("SERVICE_NAME", project.name)
     environment("SERVICE_TAG", project.version)
     commandLine 'docker-compose', "-f", "$projectDir/src/main/docker/docker-compose.yml", 'down', '-v'
+}
+
+// turn app off, including volumes
+task composeDown(type: Exec) {
+    group 'docker'
+    workingDir "$projectDir"
+    environment("SERVICE_GROUP", project.group)
+    environment("SERVICE_NAME", project.name)
+    environment("SERVICE_TAG", project.version)
+    commandLine 'docker-compose', "-f", "$projectDir/src/main/docker/docker-compose.yml", 'down'
 }
 
 // launch the app and its dependencies

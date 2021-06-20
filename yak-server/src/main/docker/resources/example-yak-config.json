@@ -20,7 +20,7 @@
     "bufferSize": 256
   },
   "threadIdleStrategy": {
-    "maxSpins": 1000,
+    "maxSpins": 10,
     "maxYields" : 10000,
     "minParkPeriodNs": 100000,
     "maxParkPeriodNs" : 1000000
