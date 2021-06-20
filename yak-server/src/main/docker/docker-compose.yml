@@ -7,6 +7,10 @@ services:
     ports:
       - 9000:9000
       - 9001:9001
+    volumes:
+      - ./resources/tmp/metrics/output:/opt/yak/metrics/output
+    environment:
+      - YAK_JFR_PROFILE_PATH=/opt/yak/metrics/profile.jfc
     deploy:
       resources:
         limits:

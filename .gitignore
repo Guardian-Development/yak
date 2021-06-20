@@ -7,6 +7,7 @@
 *.exe
 *.o
 *.so
+*.jfr
 
 # Packages #
 ############
@@ -48,6 +49,7 @@ Thumbs.db
 */target
 /build
 */build
+tmp
 
 # IntelliJ specific files/directories
 out

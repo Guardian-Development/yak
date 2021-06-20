@@ -79,7 +79,15 @@ task composeUp(type: Exec) {
     environment("SERVICE_GROUP", project.group)
     environment("SERVICE_NAME", project.name)
     environment("SERVICE_TAG", project.version)
-    commandLine 'docker-compose', "-f", "$projectDir/src/main/docker/docker-compose.yml", 'up'
+    commandLine 'docker-compose', "-f", "$projectDir/src/main/docker/docker-compose.yml", 'up', '-d'
+}
 
-    finalizedBy composeDown
+// follow the docker compose logs
+task composeLogs(type: Exec) {
+    group 'docker'
+    workingDir "$projectDir"
+    environment("SERVICE_GROUP", project.group)
+    environment("SERVICE_NAME", project.name)
+    environment("SERVICE_TAG", project.version)
+    commandLine 'docker-compose', "-f", "$projectDir/src/main/docker/docker-compose.yml", 'logs', '-f'
 }
