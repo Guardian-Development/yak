@@ -3,3 +3,7 @@ plugins {
     id 'yak.java-conventions'
     id 'yak.jmh-conventions'
 }
+
+dependencies {
+    api 'org.agrona:agrona:1.9.0'
+}

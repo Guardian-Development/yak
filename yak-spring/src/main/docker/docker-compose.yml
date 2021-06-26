@@ -1,0 +1,17 @@
+version: '3.7'
+
+services:
+
+  yak-spring-server:
+    image: ${SERVICE_GROUP}/${SERVICE_NAME}:${SERVICE_TAG}
+    ports:
+      - 8080:8080
+    volumes:
+      - ./resources/tmp/metrics/output:/opt/spring/metrics/output
+    environment:
+      - SPRING_JFR_PROFILE_PATH=/opt/spring/metrics/profile.jfc
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 250M

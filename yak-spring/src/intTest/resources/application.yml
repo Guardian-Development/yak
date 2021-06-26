@@ -1,0 +1,7 @@
+yak:
+  caches:
+    - name: intTest
+      maximumKeys: 64
+      fixedValueSize: 128
+      valueStorageMechanism: "DirectMemoryStorage"
+      evictionStrategy: "LRU"

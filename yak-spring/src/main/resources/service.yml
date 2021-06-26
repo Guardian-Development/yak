@@ -1,0 +1,71 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Hello World!
+servers:
+  - url: http://localhost:8080
+paths:
+  /cache/{cacheName}/{keyName}:
+    get:
+      summary: Gets the value of the key in the cache
+      operationId: getKeyName
+      tags:
+        - yakCache
+      parameters:
+        - name: cacheName
+          in: path
+          required: true
+          description: The name of the cache to query
+          schema:
+            type: string
+        - name: keyName
+          in: path
+          required: true
+          description: The name of key in the cache to query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Key exists and the value will be returned to you
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnyValue"
+        '404':
+          description: The key or cache did not exist
+
+    post:
+      summary: Puts a value into the cache, associated with the provided key
+      operationId: postKeyName
+      tags:
+        - yakCache
+      parameters:
+        - name: cacheName
+          in: path
+          required: true
+          description: The name of the cache to query
+          schema:
+            type: string
+        - name: keyName
+          in: path
+          required: true
+          description: The name of key in the cache to query
+          schema:
+            type: string
+      requestBody:
+        description: The value you want stored with the key
+        required: true
+        content:
+          application/json:
+            schema:
+              type: string
+      responses:
+        '201':
+          description: Value was successfully inserted for key
+        '404':
+          description: The cache did not exist
+components:
+  schemas:
+    AnyValue:
+      nullable: true
+      description: Can be any value, including `null`.

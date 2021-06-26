@@ -1,0 +1,16 @@
+management:
+  endpoints:
+    web:
+      exposure:
+        include:
+          - health
+          - info
+          - prometheus
+
+yak:
+  caches:
+    - name: default
+      maximumKeys: 64
+      fixedValueSize: 128
+      valueStorageMechanism: "DirectMemoryStorage"
+      evictionStrategy: "LRU"
