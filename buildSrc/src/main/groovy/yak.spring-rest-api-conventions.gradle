@@ -1,0 +1,75 @@
+plugins {
+    id "yak.java-conventions"
+    id "yak.java-integration-tests"
+    id "yak.docker-conventions"
+
+    id 'org.springframework.boot'
+    id 'io.spring.dependency-management'
+    id 'org.openapi.generator'
+}
+
+dependencies {
+
+    implementation project(":yak-core")
+
+    [
+        'org.springframework.boot:spring-boot-starter-webflux',
+        'org.springframework.boot:spring-boot-starter-actuator',
+        'org.springframework.boot:spring-boot-starter-validation'
+    ].each { dep ->
+        implementation(dep) {
+            exclude module: "spring-boot-starter-logging"
+        }
+    }
+
+    implementation 'org.springframework.boot:spring-boot-starter-log4j2'
+
+    // openapi dependencies
+    implementation 'io.springfox:springfox-boot-starter:3.0.0'
+    implementation 'org.openapitools:jackson-databind-nullable:0.2.1'
+
+    runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
+
+    [
+        'org.springframework.boot:spring-boot-starter-test'
+    ].each { dep ->
+        intTestImplementation(dep) {
+            exclude module: "spring-boot-starter-logging"
+        }
+    }
+
+    testImplementation 'io.projectreactor:reactor-test'
+}
+
+// adds build info to build/resources/main/META-INF for actuator endpoint
+springBoot {
+    buildInfo()
+}
+
+// generates the spring controller interfaces from openapi spec in src/main/resources/service.yml
+openApiGenerate {
+    generatorName = "spring"
+    inputSpec = "$projectDir/src/main/resources/service.yml"
+    outputDir = "$buildDir/generated"
+    apiPackage = "org.guardiandevelopment.generated.api"
+    invokerPackage = "org.guardiandevelopment.generated"
+    modelPackage = "org.guardiandevelopment.generated.models"
+    configOptions = [
+        dateLibrary: "java8",
+        interfaceOnly: "true",
+        skipDefaultInterface: "true",
+        reactive: "true",
+    ]
+}
+
+// forces generation of spring controllers on compile, adding them to the sources for compilation
+compileJava.dependsOn tasks.openApiGenerate
+sourceSets.main.java.srcDir "$buildDir/generated/src/main/java"
+sourceSets.main.resources.srcDir "$buildDir/generated/src/main/resources"
+
+task copyDependencies(type: Copy) {
+    from configurations.runtimeClasspath
+    into "$buildDir/lib"
+}
+
+buildDocker.dependsOn copyDependencies
