@@ -20,7 +20,7 @@ import org.slf4j.LoggerFactory;
  * @param <T> the key type
  * @param <Q> the value type
  */
-public final class YakCache<T, Q> {
+public class YakCache<T, Q> {
 
   private static final Logger LOG = LoggerFactory.getLogger(YakCache.class);
 
