@@ -6,8 +6,6 @@ import org.guardiandevelopment.yak.spring.service.CacheAccessor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.server.ServerWebExchange;
-import reactor.core.publisher.Mono;
 
 @RestController
 class YakApiController implements CacheApi {
@@ -17,6 +15,7 @@ class YakApiController implements CacheApi {
   /*
     TODO: add unit testing for the cache object we setup
     TODO: check jacoco and code coverage all working nicely
+    TODO: add feign client example
    */
 
   YakApiController(final CacheAccessor cacheAccessor) {
@@ -25,29 +24,27 @@ class YakApiController implements CacheApi {
   }
 
   @Override
-  public Mono<ResponseEntity<Object>> getKeyName(final String cacheName, final String keyName, final ServerWebExchange exchange) {
+  public ResponseEntity<Object> getKeyName(final String cacheName, final String keyName) {
     final var result = cacheAccessor.getValueInCache(cacheName, keyName);
 
     if (result.isEmpty()) {
-      return Mono.just(new ResponseEntity<>(HttpStatus.NOT_FOUND));
+      return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
 
     final var value = result.get();
 
-    return Mono.just(new ResponseEntity<>(value.array(), HttpStatus.OK));
+    return new ResponseEntity<>(value.array(), HttpStatus.OK);
   }
 
   @Override
-  public Mono<ResponseEntity<Void>> postKeyName(final String cacheName, final String keyName, @Valid final Mono<String> body, final ServerWebExchange exchange) {
+  public ResponseEntity<Void> postKeyName(final String cacheName, final String keyName, @Valid final String body) {
 
-    return body.map(b -> {
-      final var result = cacheAccessor.saveValueInCache(cacheName, keyName, b);
+    final var result = cacheAccessor.saveValueInCache(cacheName, keyName, body);
 
-      if (result) {
-        return new ResponseEntity<>(HttpStatus.CREATED);
-      }
+    if (result) {
+      return new ResponseEntity<>(HttpStatus.CREATED);
+    }
 
-      return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-    });
+    return new ResponseEntity<>(HttpStatus.NOT_FOUND);
   }
 }

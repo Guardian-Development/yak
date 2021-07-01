@@ -1,3 +1,7 @@
+spring:
+  application:
+    name: yak-spring
+
 yak:
   caches:
     - name: intTest

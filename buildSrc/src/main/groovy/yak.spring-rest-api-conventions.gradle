@@ -13,7 +13,7 @@ dependencies {
     implementation project(":yak-core")
 
     [
-        'org.springframework.boot:spring-boot-starter-webflux',
+        'org.springframework.boot:spring-boot-starter-web',
         'org.springframework.boot:spring-boot-starter-actuator',
         'org.springframework.boot:spring-boot-starter-validation'
     ].each { dep ->
@@ -58,7 +58,6 @@ openApiGenerate {
         dateLibrary: "java8",
         interfaceOnly: "true",
         skipDefaultInterface: "true",
-        reactive: "true",
     ]
 }
 
