@@ -7,315 +7,190 @@ import org.junit.jupiter.api.Test;
 class OpenAddressingHashMapTest {
 
   @Test
-  void shouldInsertKeyIntoStartingLocationIfEmpty() {
-    // Arrange - 16 % 16 = location 0
-    final var underTest = new OpenAddressingHashMap<FixedHashCodeOf>(16);
-    final var key = new FixedHashCodeOf(16);
+  void shouldBeAbleToGetValueAssociatedWithKey() {
+    // Arrange
+    final var underTest = new OpenAddressingHashMap<Integer, String>(4);
+
+    underTest.put(2, "test");
 
     // Act
-    final var location = underTest.getExistingOrAssign(key);
+    final var result = underTest.get(2);
 
     // Assert
-    assertThat(location).isEqualTo(0);
+    assertThat(result).isEqualTo("test");
   }
 
   @Test
-  void shouldInsertKeyIntoStartingLocationIfExistingKeyEqualToKey() {
-    // Arrange - 16 % 16 = location 0
-    final var underTest = new OpenAddressingHashMap<FixedHashCodeOf>(16);
-    final var key = new FixedHashCodeOf(16);
+  void shouldBeAbleToFillHashMapToCapacityWithoutLosingAnyValues() {
+    // Arrange
+    final var underTest = new OpenAddressingHashMap<Integer, String>(4);
 
-    underTest.getExistingOrAssign(key);
+    underTest.put(1, "test1");
+    underTest.put(2, "test2");
+    underTest.put(3, "test3");
+    underTest.put(4, "test4");
 
     // Act
-    final var location = underTest.getExistingOrAssign(key);
+    final var result1 = underTest.get(1);
+    final var result2 = underTest.get(2);
+    final var result3 = underTest.get(3);
+    final var result4 = underTest.get(4);
 
     // Assert
-    assertThat(location).isEqualTo(0);
+    assertThat(result1).isEqualTo("test1");
+    assertThat(result2).isEqualTo("test2");
+    assertThat(result3).isEqualTo("test3");
+    assertThat(result4).isEqualTo("test4");
   }
 
   @Test
-  void shouldInsertKeyInNextEmptyPositionIfInitialPositionTaken() {
-    // Arrange
-    final var underTest = new OpenAddressingHashMap<FixedHashCodeOf>(8);
-    final var key1 = new FixedHashCodeOf(8);  // 8 % 8 = location 0
-    final var key2 = new FixedHashCodeOf(16); // 16 % 16 = location 0
+  void shouldBeAbleToHandleHashCollisions() {
+    // Arrange - 2 key objects will have same hash value but not equal causing collision
+    final var underTest = new OpenAddressingHashMap<HashCollider, String>(4);
 
-    underTest.getExistingOrAssign(key1);
+    final var keyOne = new HashCollider(2);
+    final var keyTwo = new HashCollider(2);
 
-    // Act - 1 + (16 % 7) = 3
-    // 0 + 3 = next position 3
-    final var location = underTest.getExistingOrAssign(key2);
+    underTest.put(keyOne, "test1");
+    underTest.put(keyTwo, "test2");
+
+    // Act
+    final var result1 = underTest.get(keyOne);
+    final var result2 = underTest.get(keyTwo);
 
     // Assert
-    assertThat(location).isEqualTo(3);
+    assertThat(result1).isEqualTo("test1");
+    assertThat(result2).isEqualTo("test2");
   }
 
   @Test
-  void shouldInsertKeyInNextPositionContainingKeyIfInitialPositionTaken() {
+  void shouldReturnOldValueOnDelete() {
     // Arrange
-    final var underTest = new OpenAddressingHashMap<FixedHashCodeOf>(8);
-    final var key1 = new FixedHashCodeOf(8);  // 8 % 8 = location 0
-    final var key2 = new FixedHashCodeOf(16); // 16 % 16 = location 0
+    final var underTest = new OpenAddressingHashMap<Integer, String>(4);
 
-    underTest.getExistingOrAssign(key1);
-    underTest.getExistingOrAssign(key2);
+    underTest.put(1, "test1");
 
-    // Act - 1 + (16 % 7) = 3
-    // 0 + 3 = next position 3
-    final var location = underTest.getExistingOrAssign(key2);
+    // Act
+    final var old = underTest.delete(1);
 
     // Assert
-    assertThat(location).isEqualTo(3);
+    assertThat(old).isEqualTo("test1");
   }
 
   @Test
-  void shouldInsertKeyInOriginalMarkedDeletedPositionIfNoEmptyOrExistingLocationsAvailable() {
+  void shouldBeAbleToReplaceValueAssociatedWithKey() {
     // Arrange
-    final var underTest = new OpenAddressingHashMap<FixedHashCodeOf>(4);
-    final var key1 = new FixedHashCodeOf(0); // 0 % 4 = location 0
-    final var key2 = new FixedHashCodeOf(1); // 1 % 4 = location 1
-    final var key3 = new FixedHashCodeOf(2); // 2 % 4 = location 2
-    final var key4 = new FixedHashCodeOf(3); // 3 % 4 = location 3
+    final var underTest = new OpenAddressingHashMap<Integer, String>(4);
 
-    underTest.getExistingOrAssign(key1);
-    underTest.getExistingOrAssign(key2);
-    underTest.getExistingOrAssign(key3);
-    underTest.getExistingOrAssign(key4);
+    underTest.put(1, "test1");
 
+    // Act
+    final var old = underTest.put(1, "test2");
+    final var newValue = underTest.get(1);
+
+    // Assert
+    assertThat(old).isEqualTo("test1");
+    assertThat(newValue).isEqualTo("test2");
+  }
+
+  @Test
+  void shouldReturnNullWhenDeletingNonExistingKey() {
+    // Arrange
+    final var underTest = new OpenAddressingHashMap<Integer, String>(4);
+
+    // Act
+    final var old = underTest.delete(1);
+
+    // Assert
+    assertThat(old).isNull();
+  }
+
+  @Test
+  void shouldReturnOldValueWhenDeletingHashCollidedKey() {
+    // Arrange - 2 key objects will have same hash value but not equal causing collision
+    final var underTest = new OpenAddressingHashMap<HashCollider, String>(4);
+
+    final var keyOne = new HashCollider(2);
+    final var keyTwo = new HashCollider(2);
+
+    underTest.put(keyOne, "test1");
+    underTest.put(keyTwo, "test2");
+
+    // Act
+    final var result1 = underTest.delete(keyOne);
+    final var result2 = underTest.delete(keyTwo);
+
+    // Assert
+    assertThat(result1).isEqualTo("test1");
+    assertThat(result2).isEqualTo("test2");
+  }
+
+  @Test
+  void shouldBeAbleToUseDeletedSlotForNewKey() {
+    // Arrange
+    final var underTest = new OpenAddressingHashMap<Integer, String>(4);
+
+    underTest.put(1, "test1");
+    underTest.put(2, "test2");
+    underTest.put(3, "test3");
+    underTest.put(4, "test4");
+
+    underTest.delete(2);
+    underTest.delete(3);
+    underTest.put(2, "testNew2");
+    underTest.put(3, "testNew3");
+
+    // Act
+    final var result1 = underTest.get(1);
+    final var result2 = underTest.get(2);
+    final var result3 = underTest.get(3);
+    final var result4 = underTest.get(4);
+
+    // Assert
+    assertThat(result1).isEqualTo("test1");
+    assertThat(result2).isEqualTo("testNew2");
+    assertThat(result3).isEqualTo("testNew3");
+    assertThat(result4).isEqualTo("test4");
+  }
+
+  @Test
+  void shouldBeAbleToUseDeletedSlotForNewKeyWithHashCollidingKeys() {
+    // Arrange
+    final var underTest = new OpenAddressingHashMap<HashCollider, String>(4);
+
+    final var key1 = new HashCollider(1);
+    final var key2 = new HashCollider(1);
+    final var key3 = new HashCollider(2);
+    final var key4 = new HashCollider(2);
+
+    underTest.put(key1, "test1");
+    underTest.put(key2, "test2");
+    underTest.put(key3, "test3");
+    underTest.put(key4, "test4");
+
+    underTest.delete(key2);
     underTest.delete(key3);
-
-    final var newKey = new FixedHashCodeOf(6); // 6 % 4 = location 2
-
-    // Act
-    final var location = underTest.getExistingOrAssign(newKey);
-
-    // Assert
-    assertThat(location).isEqualTo(2);
-  }
-
-  @Test
-  void shouldInsertKeyInFirstDeletedPositionIfNoEmptyOrExistingLocationsAvailable() {
-    // Arrange
-    final var underTest = new OpenAddressingHashMap<FixedHashCodeOf>(4);
-    final var key1 = new FixedHashCodeOf(0); // 0 % 4 = location 0
-    final var key2 = new FixedHashCodeOf(1); // 1 % 4 = location 1
-    final var key3 = new FixedHashCodeOf(2); // 2 % 4 = location 2
-    final var key4 = new FixedHashCodeOf(3); // 3 % 4 = location 3
-
-    underTest.getExistingOrAssign(key1);
-    underTest.getExistingOrAssign(key2);
-    underTest.getExistingOrAssign(key3);
-    underTest.getExistingOrAssign(key4);
-
-    underTest.delete(key4);
-
-    final var newKey = new FixedHashCodeOf(6); // 6 % 4 = location 2
+    underTest.put(key2, "testNew2");
+    underTest.put(key3, "testNew3");
 
     // Act
-    final var location = underTest.getExistingOrAssign(newKey);
+    final var result1 = underTest.get(key1);
+    final var result2 = underTest.get(key2);
+    final var result3 = underTest.get(key3);
+    final var result4 = underTest.get(key4);
 
     // Assert
-    assertThat(location).isEqualTo(3);
+    assertThat(result1).isEqualTo("test1");
+    assertThat(result2).isEqualTo("testNew2");
+    assertThat(result3).isEqualTo("testNew3");
+    assertThat(result4).isEqualTo("test4");
   }
 
-  @Test
-  void shouldReturnNullIfAllPositionsTakenAndNoDeletedPositionsAvailable() {
-    // Arrange
-    final var underTest = new OpenAddressingHashMap<FixedHashCodeOf>(4);
-    final var key1 = new FixedHashCodeOf(0); // 0 % 4 = location 0
-    final var key2 = new FixedHashCodeOf(1); // 1 % 4 = location 1
-    final var key3 = new FixedHashCodeOf(2); // 2 % 4 = location 2
-    final var key4 = new FixedHashCodeOf(3); // 3 % 4 = location 3
-
-    underTest.getExistingOrAssign(key1);
-    underTest.getExistingOrAssign(key2);
-    underTest.getExistingOrAssign(key3);
-    underTest.getExistingOrAssign(key4);
-
-    final var newKey = new FixedHashCodeOf(6); // 6 % 4 = location 2
-
-    // Act
-    final var location = underTest.getExistingOrAssign(newKey);
-
-    // Assert
-    assertThat(location).isNull();
-  }
-
-  @Test
-  void shouldReturnTrueWhenDeletingExistingKeyInStartingLocation() {
-    // Arrange
-    final var underTest = new OpenAddressingHashMap<FixedHashCodeOf>(4);
-    final var key1 = new FixedHashCodeOf(0); // 0 % 4 = location 0
-
-    underTest.getExistingOrAssign(key1);
-
-    // Act
-    final var deleted = underTest.delete(key1);
-
-    // Assert
-    assertThat(deleted).isTrue();
-  }
-
-  @Test
-  void shouldReturnTrueWhenDeletingExistingKeyNotInStartingLocation() {
-    // Arrange
-    final var underTest = new OpenAddressingHashMap<FixedHashCodeOf>(4);
-    final var key1 = new FixedHashCodeOf(2); // 2 % 4 = location 2
-    final var key2 = new FixedHashCodeOf(6); // 6 % 4 = location 2
-
-    underTest.getExistingOrAssign(key1);
-    underTest.getExistingOrAssign(key2);
-
-    // Act - 1 + (6 % 3) = 1
-    // (2 + 1) % 4 = next position 3
-    final var deleted = underTest.delete(key2);
-
-    // Assert
-    assertThat(deleted).isTrue();
-  }
-
-  @Test
-  void shouldReturnTrueWhenKeyDoesNotExistAndHitEmptySlot() {
-    // Arrange
-    final var underTest = new OpenAddressingHashMap<FixedHashCodeOf>(4);
-    final var key1 = new FixedHashCodeOf(2); // 2 % 4 = location 2
-    final var key2 = new FixedHashCodeOf(6); // 6 % 4 = location 2
-
-    underTest.getExistingOrAssign(key1);
-
-    // Act - 1 + (6 % 3) = 1
-    // (2 + 1) % 4 = next position 3
-    final var deleted = underTest.delete(key2);
-
-    // Assert
-    assertThat(deleted).isTrue();
-  }
-
-  @Test
-  void shouldReturnTrueWhenKeyDoesNotExistAndWeCheckAllPossibleLocations() {
-    // Arrange
-    final var underTest = new OpenAddressingHashMap<FixedHashCodeOf>(4);
-    final var key1 = new FixedHashCodeOf(2);  // 2 % 4 = location 2
-    final var key2 = new FixedHashCodeOf(6);  // 6 % 4 = location 2
-    final var key3 = new FixedHashCodeOf(10); // 10 % 4 = location 2
-    final var key4 = new FixedHashCodeOf(14); // 14 % 4 = location 2
-
-    underTest.getExistingOrAssign(key1);
-    underTest.getExistingOrAssign(key2);
-    underTest.getExistingOrAssign(key3);
-    underTest.getExistingOrAssign(key4);
-
-    // Act - 1 + (18 % 3) = 1
-    // (2 + 1) % 4 = next position 3, 0, 1, 2
-    final var nonExistingKey = new FixedHashCodeOf(18); // 18 % 4 = location 2
-
-    // Act
-    final var deleted = underTest.delete(nonExistingKey);
-
-    // Assert
-    assertThat(deleted).isTrue();
-  }
-
-  @Test
-  void shouldReturnKeyWhenKeyExistsInStartingLocation() {
-    // Arrange
-    final var underTest = new OpenAddressingHashMap<FixedHashCodeOf>(4);
-    final var key1 = new FixedHashCodeOf(2);  // 2 % 4 = location 2
-
-    underTest.getExistingOrAssign(key1);
-
-    // Act
-    final var existing = underTest.get(key1);
-
-    // Assert
-    assertThat(existing).isEqualTo(2);
-  }
-
-  @Test
-  void shouldReturnKeyWhenSearchIsNeededForKey() {
-    // Arrange
-    final var underTest = new OpenAddressingHashMap<FixedHashCodeOf>(4);
-    final var key1 = new FixedHashCodeOf(2);  // 2 % 4 = location 2
-    final var key2 = new FixedHashCodeOf(6);  // 6 % 4 = location 2
-
-    underTest.getExistingOrAssign(key1);
-    underTest.getExistingOrAssign(key2);
-
-    // Act - 1 + (6 % 3) = 1
-    // 2 + 1 = 3
-    final var existing = underTest.get(key2);
-
-    // Assert
-    assertThat(existing).isEqualTo(3);
-  }
-
-  @Test
-  void shouldReturnNullIfKeyDoesNotExistInStartingPosition() {
-    // Arrange
-    final var underTest = new OpenAddressingHashMap<FixedHashCodeOf>(4);
-    final var key1 = new FixedHashCodeOf(2);  // 2 % 4 = location 2
-
-    underTest.getExistingOrAssign(key1);
-
-    // Act
-    final var existing = underTest.get(new FixedHashCodeOf(3));
-
-    // Assert
-    assertThat(existing).isNull();
-  }
-
-  @Test
-  void shouldReturnNullIfKeyDoesNotExistWhenSearching() {
-    // Arrange
-    final var underTest = new OpenAddressingHashMap<FixedHashCodeOf>(4);
-    final var key1 = new FixedHashCodeOf(2);  // 2 % 4 = location 2
-    final var key2 = new FixedHashCodeOf(6);  // 6 % 4 = location 2
-
-    underTest.getExistingOrAssign(key1);
-
-    // Act
-    final var existing = underTest.get(key2);
-
-    // Assert
-    assertThat(existing).isNull();
-  }
-
-  @Test
-  void shouldReturnNullIfKeyWithSameHashcodeButDifferentEqualsInSlot() {
-    // Arrange
-    final var underTest = new OpenAddressingHashMap<FixedHashCodeOf>(4);
-    final var key1 = new FixedHashCodeOf(2);  // 2 % 4 = location 2
-
-    underTest.getExistingOrAssign(key1);
-
-    // Act
-    final var existing = underTest.get(new FixedHashCodeOf(6));
-
-    // Assert
-    assertThat(existing).isNull();
-  }
-
-  private static final class FixedHashCodeOf {
-
-    private final int hashCodeValue;
-
-    public FixedHashCodeOf(final int hashCodeValue) {
-
-      this.hashCodeValue = hashCodeValue;
-    }
+  private record HashCollider(int hashCodeValue) {
 
     @Override
     public boolean equals(Object o) {
-
-      if (this == o) {
-        return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
-        return false;
-      }
-      FixedHashCodeOf testKey = (FixedHashCodeOf) o;
-      return hashCodeValue == testKey.hashCodeValue;
+      return this == o;
     }
 
     @Override
