@@ -1,0 +1,5 @@
+plugins {
+    id 'me.champeau.jmh' version '0.6.8'
+    id 'yak.java-conventions'
+    id 'yak.jmh-conventions'
+}

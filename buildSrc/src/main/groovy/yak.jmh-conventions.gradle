@@ -3,8 +3,8 @@ plugins {
 }
 
 jmh {
-    jmhVersion = '1.28'
-    warmupIterations = 2
-    iterations = 5
-    fork = 1
+    humanOutputFile = project.file("${project.buildDir}/results/jmh/human.txt")
+    resultsFile = project.file("${project.buildDir}/results/jmh/results.txt")
+    zip64 = true
+    jmhVersion = "1.35"
 }

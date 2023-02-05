@@ -27,6 +27,14 @@ intTest {
     testLogging {
         events "started", "failed", "passed", "standard_out"
     }
+
+    jvmArgs('--add-opens', 'java.base/sun.nio.ch=ALL-UNNAMED')
+    jvmArgs('--add-opens', 'java.base/java.util.zip=ALL-UNNAMED')
+    jvmArgs('--add-opens', 'java.base/jdk.internal.ref=ALL-UNNAMED')
+    jvmArgs('--add-opens', 'java.base/java.lang=ALL-UNNAMED')
+    jvmArgs('--add-opens', 'java.management/sun.management=ALL-UNNAMED')
+    jvmArgs('--add-opens', 'jdk.management/com.sun.management.internal=ALL-UNNAMED')
+    jvmArgs('--add-modules', 'java.se')
 }
 
 check.dependsOn intTest
