@@ -1,15 +1,18 @@
 package org.guardiandevelopment.yak.data.structures;
 
 /**
- * Provides a hash map of key to integer, where the integer is equal to the index of the key in the map.
+ * Provides a fixed size HashMap implementation using open addressing collision resolution technique.
  *
- * @param <K> the type of the key.
+ * @param <K> the type of the key
+ * @param <V> the type of the value
  */
-public final class OpenAddressingHashMap<K> {
+public final class OpenAddressingHashMap<K, V> {
 
-  private static final Object DELETED = new Object();
+  private record Node<K, V>(K key, V value) {
+  }
 
-  private final Object[] keys;
+  private final Node<K, V> deleted = new Node<>(null, null);
+  private final Node<K, V>[] values;
 
   // m and m', where m` = m - 1
   // h1(k) = k mod m = initial location
@@ -21,19 +24,20 @@ public final class OpenAddressingHashMap<K> {
    * Creates a hash map of the fixedSize using the open addressing collision resolution technique.
    *
    * <p>
-   * The fixed size must be a power of 2, as this allows for better resolutions of collisions as we use
-   * Double Hashing when probing the table.
+   * The fixed size must be a power of 2, as this allows for better resolutions of collisions
+   * as we use Double Hashing when probing the table.
    * </p>
    *
    * @param fixedSize the size of the hash map
    */
+  @SuppressWarnings("unchecked")
   public OpenAddressingHashMap(final int fixedSize) {
 
     assert IntegerExtensions.isPowerOf2(fixedSize) : "the size of the hashmap must be a power of 2";
 
-    this.keys = new Object[fixedSize];
+    this.values = (Node<K, V>[]) new Node[fixedSize];
     this.mprime = fixedSize - 1;
-    this.keySpace = keys.length;
+    this.keySpace = values.length;
   }
 
   /**
@@ -42,7 +46,7 @@ public final class OpenAddressingHashMap<K> {
    * @param key the key to search for
    * @return the location of the key if it exists, else null
    */
-  public Integer get(final K key) {
+  public V get(final K key) {
 
     if (key == null) {
       return null;
@@ -50,15 +54,15 @@ public final class OpenAddressingHashMap<K> {
 
     final var hash = key.hashCode();
     final var position = Math.abs(hash % keySpace);
-    final var currentEntryAtPosition = keys[position];
+    final var currentEntryAtPosition = values[position];
 
     // if location is empty, return null
     if (currentEntryAtPosition == null) {
       return null;
     }
 
-    if (currentEntryAtPosition.equals(key)) {
-      return position;
+    if (currentEntryAtPosition.key().equals(key)) {
+      return currentEntryAtPosition.value();
     }
 
     // collision happened, search for potential key in remaining set
@@ -66,7 +70,7 @@ public final class OpenAddressingHashMap<K> {
     var searchingPosition = (position + searchIncrement) % keySpace;
 
     while (searchingPosition != position) {
-      final var searchingEntry = keys[searchingPosition];
+      final var searchingEntry = values[searchingPosition];
 
       // if empty, key cant be present already, assign to this slot
       if (searchingEntry == null) {
@@ -74,8 +78,8 @@ public final class OpenAddressingHashMap<K> {
       }
 
       // if equal, found key, return position
-      if (searchingEntry.equals(key)) {
-        return searchingPosition;
+      if (searchingEntry.key().equals(key)) {
+        return searchingEntry.value();
       }
 
       // not found, but not hit exit condition, continue searching
@@ -86,29 +90,14 @@ public final class OpenAddressingHashMap<K> {
   }
 
   /**
-   * Assigns the key to a fixed location in the hash map.
+   * Puts a key into the hash map.
    *
-   * <p>
-   * uses the {@link #hashCode()} of the key % fixedSize to work out location.
-   * if the current entry at that location is null, assign the key to the location.
-   * if the current entry at that location is {@link #equals(Object)} to the key, assign the key to the location.
-   * if neither of these are true, we do a linear probe throughout the {@link #keys} to see if the key exists at
-   * a different location.
-   * </p>
-   * <p>
-   * This works by starting at the location we expected the key and moving forward until we hit either:
-   * an entry that is {@link #equals(Object)} to the key, then we assign the key to the existing location.
-   * Or, we hit an empty element, then we know the key must not exist in the set currently, and assign it to the
-   * empty location.
-   * If neither of these happen, and we search the entire {@link #keys} then we know the key must not exist. If we
-   * have encountered a deleted entry within that search, we assign the key to the first deleted entry.
-   * If no deleted entries have been found, we have a full {@link #keys} and return null.
-   * </p>
-   *
-   * @param key the key you wish to get an assignment for
-   * @return the assignment, or null if the {@link #keys} is full and the key does not currently exist
+   * @param key   the key to assign the value to
+   * @param value the value to insert
+   * @return the old value, or null
+   * @throws RuntimeException if there is no further room in the hash map for the value
    */
-  public Integer getExistingOrAssign(final K key) {
+  public V put(final K key, final V value) {
 
     if (key == null) {
       return null;
@@ -116,12 +105,13 @@ public final class OpenAddressingHashMap<K> {
 
     final var hash = key.hashCode();
     final var position = Math.abs(hash % keySpace);
-    final var currentEntryAtPosition = keys[position];
+    final var currentEntryAtPosition = values[position];
 
     // if location is empty, or key present is equal to param, return position of the key
-    if (currentEntryAtPosition == null || currentEntryAtPosition.equals(key)) {
-      keys[position] = key;
-      return position;
+    if (currentEntryAtPosition == null
+        || (currentEntryAtPosition != deleted && currentEntryAtPosition.key().equals(key))) {
+      values[position] = new Node<>(key, value);
+      return currentEntryAtPosition == null ? null : currentEntryAtPosition.value();
     }
 
     // collision happened, search for potential key in remaining set
@@ -130,23 +120,23 @@ public final class OpenAddressingHashMap<K> {
     var nextViableInsertLocation = -1;
 
     while (searchingPosition != position) {
-      final var searchingEntry = keys[searchingPosition];
+      final var searchingEntry = values[searchingPosition];
 
-      // if empty, key cant be present already, assign to this slot
+      // if empty, key can't be present already, assign to this slot
       if (searchingEntry == null) {
-        keys[searchingPosition] = key;
-        return searchingPosition;
+        values[searchingPosition] = new Node<>(key, value);
+        return null;
       }
 
       // mark the first deleted entry we find as the next viable insert location if we don't find an empty location
-      if (DELETED.equals(searchingEntry) && nextViableInsertLocation == -1) {
+      if (deleted.equals(searchingEntry) && nextViableInsertLocation == -1) {
         nextViableInsertLocation = searchingPosition;
       }
 
       // if equal, found key, return position
-      if (searchingEntry.equals(key)) {
-        keys[searchingPosition] = key;
-        return searchingPosition;
+      if (!deleted.equals(searchingEntry) && searchingEntry.key().equals(key)) {
+        values[searchingPosition] = new Node<>(key, value);
+        return searchingEntry.value();
       }
 
       // not found, but not hit exit condition, continue searching
@@ -154,84 +144,71 @@ public final class OpenAddressingHashMap<K> {
     }
 
     // key does not exist in set, if current position is marked as deleted, use current position
-    if (DELETED.equals(currentEntryAtPosition)) {
-      keys[position] = key;
-      return position;
+    if (deleted.equals(currentEntryAtPosition)) {
+      values[position] = new Node<>(key, value);
+      return null;
     }
 
     // key not found, or an empty space to insert key, insert at next viable location or fail
     if (nextViableInsertLocation == -1) {
-      return null;
+      throw new RuntimeException("hash map is full");
     }
 
-    keys[nextViableInsertLocation] = key;
-
-    return nextViableInsertLocation;
+    final var old = values[nextViableInsertLocation];
+    values[nextViableInsertLocation] = new Node<>(key, value);
+    return old.value();
   }
 
   /**
-   * Ensures key is no longer present in the hash map.
+   * Deletes the value currently associated with the key.
    *
-   * <p>
-   * uses the {@link #hashCode()} of the key % fixedSize to work out location.
-   * if the current entry at that location is null, does nothing, return true.
-   * if the current entry at that location is {@link #equals(Object)} to the key, marks key as deleted, return true.
-   * if neither of these are true, we do a linear probe throughout the {@link #keys} to see if the key exists at
-   * a different location.
-   * </p>
-   * <p>
-   * This works by starting at the location we expected the key and moving forward until we hit either:
-   * an entry that is {@link #equals(Object)} to the key, then we mark the key as deleted and return true.
-   * Or, we hit an empty element, then we know the key must not exist in the set currently, and return true.
-   * If neither of these happen, then the key cannot exist, and we return true.
-   * </p>
-   *
-   * @param key the key to ensure is deleted
-   * @return true if the key is no longer present in the hash map.
+   * @param key the key to remove
+   * @return the old value, or null
    */
-  public boolean delete(final K key) {
+  public V delete(final K key) {
 
     if (key == null) {
-      return false;
+      return null;
     }
 
     final var hash = key.hashCode();
     final var position = Math.abs(hash % keySpace);
 
-    final var currentEntryAtPosition = keys[position];
+    final var currentEntryAtPosition = values[position];
 
     // if location is empty, key cant be present
     if (currentEntryAtPosition == null) {
-      return true;
+      return null;
     }
 
     // if key is present at location, mark as deleted
-    if (currentEntryAtPosition.equals(key)) {
-      keys[position] = DELETED;
-      return true;
+    if (currentEntryAtPosition != deleted && currentEntryAtPosition.key().equals(key)) {
+      values[position] = deleted;
+      return currentEntryAtPosition.value();
     }
 
     final var searchIncrement = 1 + (hash % mprime);
     var searchingPosition = (position + searchIncrement) % keySpace;
 
     while (searchingPosition != position) {
-      final var searchingEntry = keys[searchingPosition];
+      final var searchingEntry = values[searchingPosition];
 
       // if empty, key cant be present
       if (searchingEntry == null) {
-        return true;
+        return null;
       }
 
       // if equal, found key, delete it
-      if (searchingEntry.equals(key)) {
-        keys[searchingPosition] = DELETED;
-        return true;
+      if (searchingEntry != deleted && searchingEntry.key().equals(key)) {
+        values[searchingPosition] = deleted;
+        return searchingEntry.value();
       }
 
       // not found, but not hit exit condition, continue searching
       searchingPosition = (searchingPosition + searchIncrement) % keySpace;
     }
 
-    return true;
+    return null;
   }
 }
+
