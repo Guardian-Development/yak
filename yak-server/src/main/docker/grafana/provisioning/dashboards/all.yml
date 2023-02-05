@@ -1,9 +1,0 @@
-apiVersion: 1
-
-# tells grafana where to find the pre-created dashboards
-providers:
-  - name: 'default'
-    folder: 'yak-dashboards'
-    type: 'file'
-    options:
-      path: '/var/lib/grafana/dashboards'

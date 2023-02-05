@@ -1,4 +1,4 @@
-package org.guardiandevelopment.yak.core.utils;
+package org.guardiandevelopment.yak.data.structures;
 
 /**
  * Static methods used to extend behaviour on the integer primitive type.

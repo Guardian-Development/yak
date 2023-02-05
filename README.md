@@ -4,14 +4,7 @@
 
 yet-another-cache implementation in Java, optimised for known size binary values.
 
-## milestones
+# features
 
-- run yak in-process (JVM) with minimal allocations after startup.
-- run yak in both RAM and file persistence mode.
-- run yak with an LRU eviction strategy.
-- run yak standalone, using TCP to communicate from client/server.
-- run yak with metrics enabled.
-- run yak with different eviction strategies.
-
-- run yak in clustered-mode, where a cache turns into an eventually consistent CRDT.
+- open addressing hash map implementation
 
