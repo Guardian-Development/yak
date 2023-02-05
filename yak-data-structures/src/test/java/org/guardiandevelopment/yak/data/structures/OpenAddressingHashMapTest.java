@@ -1,4 +1,4 @@
-package org.guardiandevelopment.yak.core.storage;
+package org.guardiandevelopment.yak.data.structures;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -301,11 +301,13 @@ class OpenAddressingHashMapTest {
     private final int hashCodeValue;
 
     public FixedHashCodeOf(final int hashCodeValue) {
+
       this.hashCodeValue = hashCodeValue;
     }
 
     @Override
     public boolean equals(Object o) {
+
       if (this == o) {
         return true;
       }
@@ -318,6 +320,7 @@ class OpenAddressingHashMapTest {
 
     @Override
     public int hashCode() {
+
       return hashCodeValue;
     }
   }

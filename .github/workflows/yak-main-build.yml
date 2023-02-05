@@ -20,5 +20,3 @@ jobs:
           java-version: '17'
       - name: build application
         run: ./gradlew clean check
-      - name: publish image to dockerhub
-        run: ./gradlew -Porg.guardiandevelopment.docker.password=${DOCKER_LOGIN_PASSWORD} publishDocker
